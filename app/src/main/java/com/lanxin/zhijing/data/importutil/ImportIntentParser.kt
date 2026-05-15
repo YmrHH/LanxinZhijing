@@ -56,6 +56,16 @@ object ImportIntentParser {
                 is DocumentImportHelper.ExtractResult.Image -> {
                     return buildImagePendingWithOcr(context, stream, ImportSource.SCREENSHOT, "分享图片")
                 }
+                is DocumentImportHelper.ExtractResult.Pdf -> {
+                    val name = TextImportHelper.queryDisplayName(context, stream) ?: "分享文件"
+                    val body = PdfImportBodyResolver.resolve(name, extracted.bytes)
+                    return PendingImport(
+                        title = name,
+                        body = body,
+                        source = ImportSource.TEXTBOOK_OR_NOTES,
+                        fileUri = stream.toString()
+                    )
+                }
                 is DocumentImportHelper.ExtractResult.Failed -> {
                     val name = TextImportHelper.queryDisplayName(context, stream) ?: "分享文件"
                     return PendingImport(

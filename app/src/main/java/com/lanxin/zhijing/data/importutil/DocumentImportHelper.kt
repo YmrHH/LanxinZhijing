@@ -12,7 +12,7 @@ import java.util.zip.ZipInputStream
  * 从用户选择的文件中抽取可分析正文。
  *
  * - 图片：返回 [ExtractResult.Image]，由调用方在 IO 协程中配合 [ImageOcrHelper] 识别。
- * - **PDF**：不本地全文抽取（见 PLAN：延后至 V0.5 AI/后端），返回可读占位说明。
+ * - **PDF**：返回 [ExtractResult.Pdf]；若已配置 `ai.backend.baseUrl`，由 [PdfImportBodyResolver] 调后端解析，否则使用 [pdfPlaceholderBody]。
  */
 object DocumentImportHelper {
 
@@ -28,6 +28,8 @@ object DocumentImportHelper {
     sealed class ExtractResult {
         data class Text(val content: String) : ExtractResult()
         data class Image(val displayName: String) : ExtractResult()
+        /** PDF 原始字节，供后端解析或占位说明。 */
+        data class Pdf(val displayName: String, val bytes: ByteArray) : ExtractResult()
         data class Failed(val message: String) : ExtractResult()
     }
 
@@ -48,7 +50,7 @@ object DocumentImportHelper {
 
         return when (resolveFormat(ext, mime)) {
             DocumentFormat.PLAIN_TEXT -> extractPlain(bytes)
-            DocumentFormat.PDF -> ExtractResult.Text(pdfDeferredToAiBody(name))
+            DocumentFormat.PDF -> ExtractResult.Pdf(name, bytes)
             DocumentFormat.DOCX -> extractDocx(bytes)
             DocumentFormat.EPUB -> extractEpub(bytes)
             DocumentFormat.ODT -> extractOdt(bytes)
@@ -67,7 +69,9 @@ object DocumentImportHelper {
                         ExtractResult.Text(trimmed.take(200_000))
                     }
                 }
-                else -> result
+                is ExtractResult.Pdf,
+                is ExtractResult.Image,
+                is ExtractResult.Failed -> result
             }
         }
     }
@@ -121,12 +125,12 @@ object DocumentImportHelper {
         )
     }
 
-    private fun pdfDeferredToAiBody(fileName: String): String =
+    fun pdfPlaceholderBody(fileName: String): String =
         buildString {
             appendLine("[PDF · 待接入 AI 解析]")
             appendLine("文件：$fileName")
             appendLine()
-            append("本地不再抽取 PDF 正文。接入蓝心或自有后端（V0.5）后，可由模型解析 PDF（含扫描版）。")
+            append("本地不再抽取 PDF 正文。若已在 local.properties 配置 ai.backend.baseUrl，导入时将请求后端 /api/lanxin/v1/parse-pdf 解析；否则请粘贴正文或导出为 .docx / .txt。")
             appendLine()
             append("请在此粘贴正文，或先用 Word/WPS 导出为 .docx / .txt 再导入。")
         }

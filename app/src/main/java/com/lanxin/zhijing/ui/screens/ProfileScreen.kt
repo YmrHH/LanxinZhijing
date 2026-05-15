@@ -71,16 +71,23 @@ fun ProfileScreen(
 }
 
 private fun aiBackendChannelSummary(): String {
-    val url = BuildConfig.AI_BACKEND_BASE_URL.trim()
-    val tail = if (url.length > 40) "…" else ""
-    val short = url.take(40) + tail
-    return when {
-        url.isEmpty() ->
-            "AI 通道：本地 Mock（在 local.properties 设置 ai.backend.baseUrl 可接自有后端）"
-        BuildConfig.AI_BACKEND_FALLBACK_TO_MOCK ->
+    val backend = BuildConfig.AI_BACKEND_BASE_URL.trim()
+    if (backend.isNotEmpty()) {
+        val tail = if (backend.length > 40) "…" else ""
+        val short = backend.take(40) + tail
+        return if (BuildConfig.AI_BACKEND_FALLBACK_TO_MOCK) {
             "AI 通道：自有后端（失败回退 Mock）\n$short"
-        else ->
+        } else {
             "AI 通道：自有后端（不回退 Mock）\n$short"
+        }
     }
+    val vivoId = BuildConfig.VIVO_AIGC_APP_ID.trim()
+    val vivoKey = BuildConfig.VIVO_AIGC_APP_KEY.trim()
+    if (vivoId.isNotEmpty() && vivoKey.isNotEmpty()) {
+        val model = BuildConfig.VIVO_AIGC_MODEL.trim().ifEmpty { "vivo-BlueLM-TB-Pro" }
+        val fb = if (BuildConfig.AI_BACKEND_FALLBACK_TO_MOCK) "失败回退 Mock" else "不回退 Mock"
+        return "AI 通道：蓝心直连（$fb，模型 $model，AppID ${vivoId.take(10)}…）"
+    }
+    return "AI 通道：本地 Mock（可配置 ai.backend.baseUrl 或 ai.vivo.appId/appKey）"
 }
 

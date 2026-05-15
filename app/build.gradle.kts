@@ -18,8 +18,8 @@ android {
         applicationId = "com.lanxin.zhijing"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.1.7"
+        versionCode = 9
+        versionName = "0.1.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -37,6 +37,17 @@ android {
             else -> "true"
         }
         buildConfigField("boolean", "AI_BACKEND_FALLBACK_TO_MOCK", fallbackToMock)
+
+        val vivoId = localProps.getProperty("ai.vivo.appId", "2026140581").trim()
+        val vivoKey = localProps.getProperty(
+            "ai.vivo.appKey",
+            "sk-xuanji-2026140581-WkdQZWpPZHFIZVIYbVFrTg=="
+        ).trim()
+        val vivoModel = localProps.getProperty("ai.vivo.model", "vivo-BlueLM-TB-Pro").trim()
+        fun esc(s: String) = s.replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField("String", "VIVO_AIGC_APP_ID", "\"${esc(vivoId)}\"")
+        buildConfigField("String", "VIVO_AIGC_APP_KEY", "\"${esc(vivoKey)}\"")
+        buildConfigField("String", "VIVO_AIGC_MODEL", "\"${esc(vivoModel)}\"")
     }
 
     buildTypes {

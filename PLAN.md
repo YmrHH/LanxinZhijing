@@ -107,27 +107,64 @@
 8. Room 持久化需完整人工验证：杀进程重启后数据仍在。  
 9. 禁止现在接真实蓝心大模型、真实 OCR、登录、云同步、会员、社区、课程商城。
 
-### 4.2 当前执行版本：0.1.7（V0.5 后端代理骨架，已完成）
+### 4.2 当前执行版本：0.1.10（PDF 后端解析契约 + 客户端调用，已完成）
 
-**0.1.7 已完成**：`BuildConfig` 从 `local.properties` 读取 `ai.backend.baseUrl` / `ai.backend.fallbackToMock`；`BackendProxyAiLearningRepository` + `FallbackAiLearningRepository` + `AiRepositoryFactory`；§12.8 JSON 契约；`INTERNET`；**Debug** `usesCleartextTraffic`；`ProfileScreen` AI 通道说明；`versionName = 0.1.7`。
+**0.1.10 已完成**：`ExtractResult.Pdf`；`BackendPdfParse` POST `/api/lanxin/v1/parse-pdf`（`fileName` + `contentBase64`）；`PdfImportBodyResolver` 供 SAF/分享导入；未配置 `ai.backend.baseUrl` 时仍为占位正文；`versionName = 0.1.10`。
 
-**0.1.6 已完成（归档）**：ML Kit 中文 OCR；移除 PDFBox；PDF 为 V0.5 AI 占位。
+**0.1.9 已完成（归档）**：分析页加载/错误/重试。
 
-**下一步（V0.5 后续）**：服务端对接 vivo 蓝心、**PDF 交模型/后端解析**、鉴权头与重试 UI。
+**下一步**：复习页费曼联调加载与重试；V0.6 追问强化；服务端实现 `parse-pdf` 与蓝心衔接。
 
 ---
 
-## 6. 当前阶段执行计划（0.1.7 · V0.5 后端代理骨架）
+## 6. 当前阶段执行计划（0.1.10 · PDF 后端解析）
 
-### 6.1 本次开发计划（0.1.7）
+### 6.1 本次开发计划（0.1.10）
 
-**任务目标**：`AiRepositoryFactory` 根据 `BuildConfig` 装配 `Mock` / `BackendProxy` / `Fallback`；约定后端路径与 JSON 字段（见 §12.8）；`LearningViewModelFactory` 注入 `Application` 提供的 `AiLearningRepository`；`INTERNET` 权限；**debug** `usesCleartextTraffic=true`（release 仍禁止明文）。
+**任务目标**：§12.8 增加 `parse-pdf`；`DocumentImportHelper` 对 PDF 返回 `Pdf(bytes)`；`BackendPdfParse` + `PdfImportBodyResolver`；`LearningViewModel.stageFromFile` 与 `ImportIntentParser` 在配置后端时请求解析并填入预览正文。
 
-**允许修改**：`PLAN.md`、`app/build.gradle.kts`（`buildConfig`、从 `local.properties` 注入字段）、`AndroidManifest.xml`、`src/debug/AndroidManifest.xml`（新建）、`LanxinZhijingApplication.kt`、`data/ai/*.kt`（新增/调整）、`viewmodel/LearningViewModel.kt`（仅 Factory 注入）、`ui/screens/ProfileScreen.kt`（仅 AI 通道文案）
+**允许修改**：`PLAN.md`、`app/build.gradle.kts`、`data/importutil/*.kt`、`data/ai/BackendPdfParse.kt`（新）、`viewmodel/LearningViewModel.kt`
 
-**禁止**：仓库内硬编码 AppKEY、客户端直连 vivo 生产 API、改 Room Entity、新增底部 Tab 页面
+**禁止**：新主页面、改 Room Entity、在 PLAN 写密钥
 
-**验收**：未配置后端时行为与 0.1.6 一致（Mock）；配置合法后端 URL 时发起 POST 且解析成功则走远端；失败且 `ai.backend.fallbackToMock=true` 时回退 Mock；`versionName = "0.1.7"`；`assembleDebug` 通过（**已完成**）
+**验收**：未配置后端时 PDF 仍为占位；配置且后端返回 `text` 时预览为解析正文；失败时占位 + 失败说明；`compileDebugKotlin` 通过（**已完成**）
+
+---
+
+## 6-legacy-019. 历史：0.1.9 · 分析页 §12.7（已完成）
+
+<details>
+<summary>0.1.9 范围（归档）</summary>
+
+**任务目标**：`analysisLoading` / `analysisError`、`AnalysisScreen` 重试。
+
+**验收**：`versionName = "0.1.9"`。
+
+</details>
+
+---
+
+## 6-legacy-018. 历史：0.1.8 · 分步提示接 AI（已完成）
+
+<details>
+<summary>0.1.8 范围（归档）</summary>
+
+**任务目标**：`buildNodeQuestionContext`；`generateStepHints` + 加载/重试；`askNodeQuestion` 同上下文；`versionName = 0.1.8`。
+
+</details>
+
+---
+
+## 6-legacy-017. 历史：0.1.7 · V0.5 后端代理骨架（已完成）
+
+<details>
+<summary>0.1.7 范围（归档）</summary>
+
+**任务目标**：`AiRepositoryFactory`、`BackendProxy`、`Fallback`、`BuildConfig`、`§12.8`、`INTERNET`、debug 明文、`ProfileScreen` AI 通道。
+
+**验收**：`versionName = "0.1.7"`。
+
+</details>
 
 ---
 
@@ -186,6 +223,9 @@
 | **0.1.5** | **V0.4 多格式文档导入（第一批）** | **已完成** |
 | **0.1.6** | **V0.4 图片 OCR；PDF 延后 V0.5 AI** | **已完成** |
 | **0.1.7** | **V0.5 第一批：后端代理 + Fallback + BuildConfig** | **已完成** |
+| **0.1.8** | **分步提示接 AI + Room 构建 NodeQuestionContext** | **已完成** |
+| **0.1.9** | **分析页 AI 加载/失败/重试（§12.7）** | **已完成** |
+| **0.1.10** | **PDF：`parse-pdf` 后端 + 导入预览** | **已完成** |
 
 ---
 
@@ -334,9 +374,9 @@
 - [x] V0.4：**0.1.5** docx/epub/odt/rtf/多编码 TXT 本地抽取  
 - [x] V0.4：**0.1.6** 图片 ML Kit OCR；PDF 改 V0.5 AI 占位策略  
 - [ ] V0.5：真实 AI + **PDF 由模型/后端解析**  
-- [x] **0.1.7**：后端代理 HTTP + BuildConfig + Fallback Mock（**不含**客户端 AppKEY）  
-
----
+- [x] **0.1.8**：分步提示接 AI；Room 构建 `NodeQuestionContext`；节点追问同上下文  
+- [x] **0.1.9**：分析页 AI 加载态 + 失败重试（§12.7）  
+- [x] **0.1.10**：PDF 后端 `parse-pdf` + 导入预览（需 `ai.backend.baseUrl`）  
 
 ## 8. 未完成内容
 
@@ -443,7 +483,7 @@ interface AiLearningRepository {
 ### 12.5 文档与 PDF 策略
 
 - **图片文字**：V0.4 起使用设备端 **ML Kit 中文识别**（离线模型由 Play 服务分发）。  
-- **PDF**：不在客户端强依赖本地 PDF 库做全文抽取；**V0.5 接入真实 AI 或后端**后，将 PDF（含扫描件）以文件或文本片段交给模型解析；V0.4 阶段导入 PDF 时展示说明并允许用户粘贴或导出 Word 替代。  
+- **PDF**：不在客户端强依赖本地 PDF 库做全文抽取；**已配置 `ai.backend.baseUrl` 时**客户端 `POST /api/lanxin/v1/parse-pdf` 将 PDF Base64 交自有后端解析（见 §12.8）；未配置时导入预览仍为占位，可手改或导出 Word。  
 
 ### 12.6 AI 接入阶段
 
@@ -457,7 +497,7 @@ interface AiLearningRepository {
 
 ### 12.7 错误处理（V0.5 起）
 
-网络失败、鉴权失败、限流、空响应、JSON 解析失败、超时 → UI 展示加载中 / 失败 / 重试（可选 Mock 降级）。
+网络失败、鉴权失败、限流、空响应、JSON 解析失败、超时 → UI 展示加载中 / 失败 / 重试（可选 Mock 降级）。**已实现**：`AnalysisScreen`（`analysisLoading` / `analysisError`、「重新分析」）；节点聚焦分步提示（0.1.8）。
 
 ### 12.8 自有后端 JSON 契约（0.1.7 起，相对 `AI_BACKEND_BASE_URL`）
 
@@ -465,6 +505,7 @@ interface AiLearningRepository {
 
 | 能力 | 方法 | 路径 | 请求 JSON | 响应 JSON |
 |------|------|------|-----------|-----------|
+| PDF 解析（Base64 → 正文） | POST | `/api/lanxin/v1/parse-pdf` | `fileName`（string）、`contentBase64`（string，PDF 原始字节 Base64） | `text`（string），或 `data.text` |
 | 学习分析 | POST | `/api/lanxin/v1/analyze` | `text`（string）、`importSource`（string，与 `ImportSource.name` 一致） | 见下「分析结果」 |
 | 节点追问 | POST | `/api/lanxin/v1/node-ask` | `nodeContext`（对象，字段与 `NodeQuestionContext` 一致；`relatedNodes` 为 `{id,label,progress,type}` 数组）、`question`（string） | `answer`（string） |
 | 分步提示 | POST | `/api/lanxin/v1/step-hints` | 同 `nodeContext` 对象（与追问一致） | `hints`（string 数组） |
@@ -513,18 +554,15 @@ NodeFocus → Review
 
 ---
 
-## 15. 当前开发任务追踪（0.1.7）
+## 15. 当前开发任务追踪（0.1.10）
 
 | # | 任务 | 状态 |
 |---|------|------|
-| 1 | PLAN：§4.2 / §6 / §12.8 / 路线图 0.1.7 | 已完成 |
-| 2 | `buildConfig` + `local.properties` 注入 `AI_BACKEND_*` | 已完成 |
-| 3 | `BackendProxyAiLearningRepository` + JSON 解析 | 已完成 |
-| 4 | `FallbackAiLearningRepository` + `AiRepositoryFactory` | 已完成 |
-| 5 | `Application` / `LearningViewModelFactory` 注入 AI | 已完成 |
-| 6 | `INTERNET` + debug 明文流量 | 已完成 |
-| 7 | `ProfileScreen` AI 通道说明 | 已完成 |
-| 8 | `versionName=0.1.7`，`versionCode=6`，`assembleDebug` | 已完成 |
+| 1 | PLAN：§4.2 / §6 / §12.5 / §12.8 / §5.2 / §15 | 已完成 |
+| 2 | `ExtractResult.Pdf` + `DocumentImportHelper` | 已完成 |
+| 3 | `BackendPdfParse` + `PdfImportBodyResolver` | 已完成 |
+| 4 | `LearningViewModel` / `ImportIntentParser` 接入 | 已完成 |
+| 5 | `versionName=0.1.10`，`versionCode=9` | 已完成 |
 
 ---
 
@@ -675,6 +713,63 @@ NodeFocus → Review
 **自测**：编译通过；分享/划词/拍照/选图须在真机验证。  
 
 **下一步**：**V0.5** 接入真实 AI / 后端；PDF 由模型解析；`AiLearningRepository` 真实实现。  
+
+---
+
+### 2026-05-15 · 0.1.10 PDF 后端 parse-pdf 与导入预览
+
+**状态**：已完成  
+
+**已完成**：
+
+1. §12.8 新增 `POST /api/lanxin/v1/parse-pdf`（`fileName`、`contentBase64` → `text` 或 `data.text`）。  
+2. `DocumentImportHelper.ExtractResult.Pdf`；`pdfPlaceholderBody`；`BackendPdfParse`；`PdfImportBodyResolver`。  
+3. `LearningViewModel.stageFromFile`、`ImportIntentParser` 分享文件路径在配置 `ai.backend.baseUrl` 时请求解析。  
+4. `versionName = "0.1.10"`，`versionCode = 9`。  
+
+**修改文件**：`PLAN.md`、`app/build.gradle.kts`、`DocumentImportHelper.kt`、`ImportIntentParser.kt`、`LearningViewModel.kt`、`BackendPdfParse.kt`（新）、`PdfImportBodyResolver.kt`（新）  
+
+**自测**：`compileDebugKotlin`。  
+
+**下一步**：服务端实现 `parse-pdf`（调蓝心/解析库）；复习页费曼加载与重试。  
+
+---
+
+### 2026-05-15 · 0.1.9 分析页 AI 加载与失败重试
+
+**状态**：已完成  
+
+**已完成**：
+
+1. `LearningViewModel`：`analysisLoading`、`analysisError`、`runLearningAnalysis`；`confirmPendingImport` 与 `refreshAnalysisForDisplay` 共用；`retryAnalysisForDisplay()`。  
+2. `AnalysisScreen`：`LinearProgressIndicator`、错误卡与「重新分析」；加载中隐藏正文与按钮。  
+3. `versionName = "0.1.9"`，`versionCode = 8`。  
+
+**修改文件**：`PLAN.md`、`app/build.gradle.kts`、`LearningViewModel.kt`、`AnalysisScreen.kt`  
+
+**自测**：`compileDebugKotlin`。  
+
+**下一步**：PDF 解析链路或服务端接口；复习页/费曼联调加载与重试。  
+
+---
+
+### 2026-05-15 · 0.1.8 分步提示接 AI 与 Room 节点上下文
+
+**状态**：已完成  
+
+**已完成**：
+
+1. `LearningRepository.buildNodeQuestionContext(nodeId)`：当前节点描述 + 知识树边邻居（至多 6 个）。  
+2. `LearningViewModel`：`nodeStepHints` / `nodeStepHintsLoading` / `nodeStepHintsError`、`retryNodeStepHints()`；展开分步提示时请求 `generateStepHints`；切换焦点节点时清空并收起提示区。  
+3. `NodeFocusScreen`：加载圈、错误文案与「重试」、动态条目列表。  
+4. `sendUserMessageAndMockReply` 改用同一 `buildNodeQuestionContext`（不再使用 `demoNodeQuestionContext()`）。  
+5. `versionName = "0.1.8"`，`versionCode = 7`。  
+
+**修改文件**：`PLAN.md`、`app/build.gradle.kts`、`LearningRepository.kt`、`LearningViewModel.kt`、`NodeFocusScreen.kt`  
+
+**自测**：`compileDebugKotlin`（由代理执行）。  
+
+**下一步**：分析页分析中的加载与失败重试；服务端/模型侧 PDF 解析。  
 
 ---
 

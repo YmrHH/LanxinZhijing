@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +46,9 @@ fun NodeFocusScreen(
 ) {
     val messages by viewModel.chatMessages.collectAsStateWithLifecycle()
     val hintsExpanded by viewModel.stepHintsExpanded.collectAsStateWithLifecycle()
+    val stepHints by viewModel.nodeStepHints.collectAsStateWithLifecycle()
+    val stepHintsLoading by viewModel.nodeStepHintsLoading.collectAsStateWithLifecycle()
+    val stepHintsError by viewModel.nodeStepHintsError.collectAsStateWithLifecycle()
     val focusNode by viewModel.focusNodeDisplay.collectAsStateWithLifecycle()
     var input by remember { mutableStateOf("") }
 
@@ -120,23 +126,33 @@ fun NodeFocusScreen(
                         color = AppColors.textPrimary
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "提示 1：先判断导数符号",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AppColors.textPrimary
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "提示 2：再看该符号在区间内是否稳定",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AppColors.textPrimary
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "提示 3：如果 f'(x)>0，函数在该区间递增；如果 f'(x)<0，函数在该区间递减。",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AppColors.textPrimary
-                    )
+                    if (stepHintsLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(36.dp),
+                            strokeWidth = 3.dp,
+                            color = AppColors.primary
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    stepHintsError?.let { err ->
+                        Text(
+                            text = err,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.textSecondary
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        TextButton(onClick = { viewModel.retryNodeStepHints() }) {
+                            Text("重试")
+                        }
+                    }
+                    stepHints.forEachIndexed { i, line ->
+                        if (i > 0) Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = "${i + 1}. $line",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppColors.textPrimary
+                        )
+                    }
                 }
             }
         }

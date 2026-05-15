@@ -7,6 +7,7 @@ import com.lanxin.zhijing.data.KnowledgeRelation
 import com.lanxin.zhijing.data.LearningItem
 import com.lanxin.zhijing.data.MockData
 import com.lanxin.zhijing.data.ai.FeynmanEvaluationResult
+import com.lanxin.zhijing.data.ai.NodeQuestionContext
 import com.lanxin.zhijing.data.local.AppDatabase
 import com.lanxin.zhijing.data.local.LocalDbConstants
 import com.lanxin.zhijing.data.ai.ImportSource
@@ -24,6 +25,7 @@ import com.lanxin.zhijing.data.local.toKnowledgeRelation
 import com.lanxin.zhijing.data.local.toLearningItem
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class LearningRepository(
@@ -82,6 +84,45 @@ class LearningRepository(
 
     fun getKnowledgeNode(nodeId: String): Flow<KnowledgeNode?> =
         knowledgeNodeDao.getNodeById(nodeId).map { it?.toKnowledgeNode() }
+
+    /**
+     * 为 AI 节点追问 / 分步提示构建上下文：当前节点 + 知识树上通过边相邻的节点（最多 6 个）。
+     */
+    suspend fun buildNodeQuestionContext(nodeId: String): NodeQuestionContext {
+        val entity = knowledgeNodeDao.getNodeById(nodeId).first()
+        val allEntities = knowledgeNodeDao.getAllNodes().first()
+        val idSet = allEntities.map { it.id }.toSet()
+        val byId = allEntities.associateBy { it.id }
+        val relations = knowledgeRelationDao.getRelationsByContentId(LocalDbConstants.CONTENT_TREE_ROOT_ID).first()
+        val neighborIds = relations.asSequence()
+            .filter { it.fromNodeId == nodeId || it.toNodeId == nodeId }
+            .map { if (it.fromNodeId == nodeId) it.toNodeId else it.fromNodeId }
+            .filter { it != nodeId && it in idSet }
+            .distinct()
+            .take(6)
+            .toList()
+        val relatedNodes = neighborIds.mapNotNull { byId[it]?.toKnowledgeNode() }
+        if (entity != null) {
+            return NodeQuestionContext(
+                nodeId = entity.id,
+                nodeTitle = entity.title,
+                nodeDescription = entity.description,
+                mastery = entity.mastery,
+                relatedNodes = relatedNodes,
+                recentMistakes = emptyList(),
+                recentReviewFeedback = emptyList()
+            )
+        }
+        return NodeQuestionContext(
+            nodeId = nodeId,
+            nodeTitle = "未知节点",
+            nodeDescription = "",
+            mastery = 0,
+            relatedNodes = relatedNodes,
+            recentMistakes = emptyList(),
+            recentReviewFeedback = emptyList()
+        )
+    }
 
     suspend fun initializeIfNeeded() {
         if (learningContentDao.countContents() > 0) return

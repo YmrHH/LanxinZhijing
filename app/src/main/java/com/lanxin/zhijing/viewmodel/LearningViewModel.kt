@@ -17,10 +17,10 @@ import com.lanxin.zhijing.data.ai.ImportSource
 import com.lanxin.zhijing.data.ai.LearningAnalysisResult
 import com.lanxin.zhijing.data.ai.MockAiLearningRepository
 import com.lanxin.zhijing.data.ai.builtInDefaultLearningAnalysis
-import com.lanxin.zhijing.data.ai.demoNodeQuestionContext
 import com.lanxin.zhijing.data.importutil.DocumentImportHelper
 import com.lanxin.zhijing.data.importutil.ImageOcrHelper
 import com.lanxin.zhijing.data.importutil.ImportIntentParser
+import com.lanxin.zhijing.data.importutil.PdfImportBodyResolver
 import com.lanxin.zhijing.data.importutil.PendingImport
 import com.lanxin.zhijing.data.importutil.TextImportHelper
 import com.lanxin.zhijing.data.local.LocalDbConstants
@@ -74,6 +74,15 @@ class LearningViewModel(
     private val _stepHintsExpanded = MutableStateFlow(false)
     val stepHintsExpanded: StateFlow<Boolean> = _stepHintsExpanded.asStateFlow()
 
+    private val _nodeStepHints = MutableStateFlow<List<String>>(emptyList())
+    val nodeStepHints: StateFlow<List<String>> = _nodeStepHints.asStateFlow()
+
+    private val _nodeStepHintsLoading = MutableStateFlow(false)
+    val nodeStepHintsLoading: StateFlow<Boolean> = _nodeStepHintsLoading.asStateFlow()
+
+    private val _nodeStepHintsError = MutableStateFlow<String?>(null)
+    val nodeStepHintsError: StateFlow<String?> = _nodeStepHintsError.asStateFlow()
+
     val profileKnowledgeCount: StateFlow<Int> = learningRepository.profileKnowledgeCount
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
@@ -85,6 +94,12 @@ class LearningViewModel(
 
     private val _analysisDisplay = MutableStateFlow(builtInDefaultLearningAnalysis())
     val analysisDisplay: StateFlow<LearningAnalysisResult> = _analysisDisplay.asStateFlow()
+
+    private val _analysisLoading = MutableStateFlow(false)
+    val analysisLoading: StateFlow<Boolean> = _analysisLoading.asStateFlow()
+
+    private val _analysisError = MutableStateFlow<String?>(null)
+    val analysisError: StateFlow<String?> = _analysisError.asStateFlow()
 
     private val _pendingImport = MutableStateFlow<PendingImport?>(null)
     val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
@@ -142,6 +157,15 @@ class LearningViewModel(
                         body = body,
                         source = ImportSource.TEXTBOOK_OR_NOTES,
                         imageUri = uri.toString()
+                    )
+                }
+                is DocumentImportHelper.ExtractResult.Pdf -> {
+                    val body = PdfImportBodyResolver.resolve(name, result.bytes)
+                    PendingImport(
+                        title = name,
+                        body = body,
+                        source = ImportSource.TEXTBOOK_OR_NOTES,
+                        fileUri = uri.toString()
                     )
                 }
                 is DocumentImportHelper.ExtractResult.Failed -> PendingImport(
@@ -203,10 +227,7 @@ class LearningViewModel(
                 fileUri = pending.fileUri,
                 imageUri = pending.imageUri
             )
-            _analysisDisplay.value = aiRepository.analyzeLearningContent(
-                pending.body.trim(),
-                pending.source
-            ).getOrElse { builtInDefaultLearningAnalysis() }
+            runLearningAnalysis(pending.body.trim(), pending.source)
             _pendingImport.value = null
             onDone(true)
         }
@@ -218,9 +239,27 @@ class LearningViewModel(
             val text = latest?.rawText.orEmpty()
             val src = latest?.sourceType?.let { runCatching { ImportSource.valueOf(it) }.getOrNull() }
                 ?: ImportSource.PASTE_TEXT
-            _analysisDisplay.value = aiRepository.analyzeLearningContent(text, src).getOrElse {
-                builtInDefaultLearningAnalysis()
+            runLearningAnalysis(text, src)
+        }
+    }
+
+    /** 分析页「重新分析」：按最近一条导入重新请求 AI。 */
+    fun retryAnalysisForDisplay() {
+        refreshAnalysisForDisplay()
+    }
+
+    private suspend fun runLearningAnalysis(text: String, source: ImportSource) {
+        _analysisLoading.value = true
+        _analysisError.value = null
+        try {
+            val result = aiRepository.analyzeLearningContent(text, source)
+            _analysisDisplay.value = result.getOrElse { builtInDefaultLearningAnalysis() }
+            if (result.isFailure) {
+                _analysisError.value =
+                    result.exceptionOrNull()?.message ?: "分析失败，已显示本地参考结果"
             }
+        } finally {
+            _analysisLoading.value = false
         }
     }
 
@@ -240,15 +279,54 @@ class LearningViewModel(
 
     fun setFocusNodeId(nodeId: String) {
         focusNodeId.value = nodeId
+        _nodeStepHints.value = emptyList()
+        _nodeStepHintsError.value = null
+        _nodeStepHintsLoading.value = false
+        _stepHintsExpanded.value = false
     }
 
     fun toggleStepHints() {
-        _stepHintsExpanded.value = !_stepHintsExpanded.value
+        val next = !_stepHintsExpanded.value
+        _stepHintsExpanded.value = next
+        if (next) loadNodeStepHints()
     }
 
     fun setStepHintsExpanded(expanded: Boolean) {
         _stepHintsExpanded.value = expanded
+        if (expanded) loadNodeStepHints()
     }
+
+    fun retryNodeStepHints() {
+        if (_stepHintsExpanded.value) loadNodeStepHints()
+    }
+
+    private fun loadNodeStepHints() {
+        viewModelScope.launch {
+            val nodeId = focusNodeId.value
+            _nodeStepHintsLoading.value = true
+            _nodeStepHintsError.value = null
+            val ctx = learningRepository.buildNodeQuestionContext(nodeId)
+            val result = aiRepository.generateStepHints(ctx)
+            if (focusNodeId.value != nodeId) {
+                _nodeStepHintsLoading.value = false
+                return@launch
+            }
+            val lines = result.getOrElse { defaultStepHintsFallback() }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+            _nodeStepHints.value = lines.ifEmpty { defaultStepHintsFallback() }
+            if (result.isFailure) {
+                _nodeStepHintsError.value = result.exceptionOrNull()?.message ?: "分步提示加载失败"
+            }
+            _nodeStepHintsLoading.value = false
+        }
+    }
+
+    private fun defaultStepHintsFallback(): List<String> = listOf(
+        "提示 1：先判断导数符号",
+        "提示 2：再看该符号在区间内是否稳定",
+        "提示 3：如果 f'(x)>0，函数在该区间递增；如果 f'(x)<0，函数在该区间递减。"
+    )
 
     fun sendUserMessageAndMockReply(text: String) {
         val trimmed = text.trim()
@@ -256,7 +334,7 @@ class LearningViewModel(
         val nodeId = focusNodeId.value
         viewModelScope.launch {
             learningRepository.addChatMessage(nodeId, "USER", trimmed)
-            val ctx = demoNodeQuestionContext()
+            val ctx = learningRepository.buildNodeQuestionContext(nodeId)
             val reply = aiRepository.askNodeQuestion(ctx, trimmed).getOrElse {
                 com.lanxin.zhijing.data.MockData.mockAiFollowUpReply
             }
