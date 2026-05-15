@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lanxin.zhijing.BuildConfig
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.PageHeader
 import com.lanxin.zhijing.ui.theme.AppColors
@@ -53,6 +54,12 @@ fun ProfileScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = aiBackendChannelSummary(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.textSecondary
+            )
         }
         Text(
             text = "个人学习画像将在后续版本完善。",
@@ -62,3 +69,18 @@ fun ProfileScreen(
         )
     }
 }
+
+private fun aiBackendChannelSummary(): String {
+    val url = BuildConfig.AI_BACKEND_BASE_URL.trim()
+    val tail = if (url.length > 40) "…" else ""
+    val short = url.take(40) + tail
+    return when {
+        url.isEmpty() ->
+            "AI 通道：本地 Mock（在 local.properties 设置 ai.backend.baseUrl 可接自有后端）"
+        BuildConfig.AI_BACKEND_FALLBACK_TO_MOCK ->
+            "AI 通道：自有后端（失败回退 Mock）\n$short"
+        else ->
+            "AI 通道：自有后端（不回退 Mock）\n$short"
+    }
+}
+

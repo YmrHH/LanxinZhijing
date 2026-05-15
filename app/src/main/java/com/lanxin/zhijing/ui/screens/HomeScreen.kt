@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lanxin.zhijing.data.ai.ImportSource
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.AppProgressBar
 import com.lanxin.zhijing.ui.components.LearningItemCard
@@ -40,8 +41,9 @@ import com.lanxin.zhijing.viewmodel.LearningViewModel
 @Composable
 fun HomeScreen(
     viewModel: LearningViewModel,
-    onOpenAnalysis: () -> Unit,
+    onOpenCamera: () -> Unit,
     onOpenKnowledgeTree: () -> Unit,
+    onOpenImportPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val learningItems by viewModel.learningItems.collectAsStateWithLifecycle()
@@ -58,8 +60,23 @@ fun HomeScreen(
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         viewModel.importFromFile(context, uri) { ok ->
-            if (ok) onOpenAnalysis()
-            else context.showShortToast("无法读取文件（过大或非 UTF-8 文本）")
+            if (ok) onOpenImportPreview()
+            else context.showShortToast("无法打开文件，请重试")
+        }
+    }
+
+    val pickScreenshot = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        viewModel.stageFromImageUri(
+            context = context,
+            uri = uri,
+            source = ImportSource.SCREENSHOT,
+            defaultTitle = "截图识别"
+        ) { ok ->
+            if (ok) onOpenImportPreview()
+            else context.showShortToast("无法读取图片")
         }
     }
 
@@ -92,14 +109,14 @@ fun HomeScreen(
                             if (ok) {
                                 showPasteDialog = false
                                 pasteBody = ""
-                                onOpenAnalysis()
+                                onOpenImportPreview()
                             } else {
                                 context.showShortToast("请输入要导入的内容")
                             }
                         }
                     }
                 ) {
-                    Text("导入并分析")
+                    Text("下一步：预览")
                 }
             },
             dismissButton = {
@@ -165,11 +182,11 @@ fun HomeScreen(
                         title = "拍一道错题",
                         subtitle = "错因诊断",
                         modifier = Modifier.weight(1f),
-                        onClick = onOpenAnalysis
+                        onClick = onOpenCamera
                     )
                     HomeEntryCard(
                         title = "导入教材/笔记",
-                        subtitle = "生成知识树",
+                        subtitle = "pdf/docx/epub…",
                         modifier = Modifier.weight(1f),
                         onClick = { pickFile.launch("*/*") }
                     )
@@ -186,9 +203,9 @@ fun HomeScreen(
                     )
                     HomeEntryCard(
                         title = "截图识别",
-                        subtitle = "系统级入口",
+                        subtitle = "相册选图",
                         modifier = Modifier.weight(1f),
-                        onClick = onOpenAnalysis
+                        onClick = { pickScreenshot.launch("image/*") }
                     )
                 }
             }

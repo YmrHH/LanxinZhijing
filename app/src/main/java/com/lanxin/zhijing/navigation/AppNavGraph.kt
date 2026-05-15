@@ -13,11 +13,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lanxin.zhijing.data.ai.ImportSource
 import com.lanxin.zhijing.data.local.LocalDbConstants
 import com.lanxin.zhijing.ui.components.AppScaffold
 import com.lanxin.zhijing.ui.components.BottomNavBar
 import com.lanxin.zhijing.ui.screens.AnalysisScreen
+import com.lanxin.zhijing.ui.screens.CameraCaptureScreen
 import com.lanxin.zhijing.ui.screens.HomeScreen
+import com.lanxin.zhijing.ui.screens.ImportPreviewScreen
 import com.lanxin.zhijing.ui.screens.KnowledgeTreeScreen
 import com.lanxin.zhijing.ui.screens.NodeFocusScreen
 import com.lanxin.zhijing.ui.screens.ProfileScreen
@@ -42,6 +46,16 @@ fun AppNavGraph(
     val showBottomBar = currentRoute?.substringBefore("/") in tabRoutes ||
         currentRoute in tabRoutes
     val context = LocalContext.current
+    val openImportPreview by learningViewModel.openImportPreview.collectAsStateWithLifecycle()
+
+    LaunchedEffect(openImportPreview) {
+        if (openImportPreview) {
+            navController.navigate(Routes.IMPORT_PREVIEW) {
+                launchSingleTop = true
+            }
+            learningViewModel.consumeOpenImportPreviewRequest()
+        }
+    }
 
     fun navigateToTab(route: String) {
         navController.navigate(route) {
@@ -70,8 +84,40 @@ fun AppNavGraph(
             composable(Routes.HOME) {
                 HomeScreen(
                     viewModel = learningViewModel,
-                    onOpenAnalysis = { navController.navigate(Routes.ANALYSIS) },
-                    onOpenKnowledgeTree = { navigateToTab(Routes.KNOWLEDGE_TREE) }
+                    onOpenCamera = { navController.navigate(Routes.CAMERA_CAPTURE) },
+                    onOpenKnowledgeTree = { navigateToTab(Routes.KNOWLEDGE_TREE) },
+                    onOpenImportPreview = { navController.navigate(Routes.IMPORT_PREVIEW) }
+                )
+            }
+            composable(Routes.CAMERA_CAPTURE) {
+                CameraCaptureScreen(
+                    onPhotoCaptured = { uri ->
+                        learningViewModel.stageFromImageUri(
+                            context = context,
+                            uri = uri,
+                            source = ImportSource.PHOTO_WRONG_QUESTION,
+                            defaultTitle = "拍照错题"
+                        ) { ok ->
+                            if (ok) {
+                                navController.popBackStack()
+                                navController.navigate(Routes.IMPORT_PREVIEW)
+                            } else {
+                                context.showShortToast("无法处理照片")
+                            }
+                        }
+                    },
+                    onCancel = { navController.popBackStack() }
+                )
+            }
+            composable(Routes.IMPORT_PREVIEW) {
+                ImportPreviewScreen(
+                    viewModel = learningViewModel,
+                    onConfirm = {
+                        navController.navigate(Routes.ANALYSIS) {
+                            popUpTo(Routes.HOME)
+                        }
+                    },
+                    onCancel = { navController.popBackStack() }
                 )
             }
             composable(Routes.ANALYSIS) {

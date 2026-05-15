@@ -2,6 +2,7 @@ package com.lanxin.zhijing.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -17,6 +18,10 @@ import com.lanxin.zhijing.data.ai.LearningAnalysisResult
 import com.lanxin.zhijing.data.ai.MockAiLearningRepository
 import com.lanxin.zhijing.data.ai.builtInDefaultLearningAnalysis
 import com.lanxin.zhijing.data.ai.demoNodeQuestionContext
+import com.lanxin.zhijing.data.importutil.DocumentImportHelper
+import com.lanxin.zhijing.data.importutil.ImageOcrHelper
+import com.lanxin.zhijing.data.importutil.ImportIntentParser
+import com.lanxin.zhijing.data.importutil.PendingImport
 import com.lanxin.zhijing.data.importutil.TextImportHelper
 import com.lanxin.zhijing.data.local.LocalDbConstants
 import com.lanxin.zhijing.data.repository.LearningRepository
@@ -27,7 +32,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -37,6 +44,12 @@ class LearningViewModel(
 ) : ViewModel() {
 
     private val focusNodeId = MutableStateFlow(LocalDbConstants.NODE_DERIVATIVE)
+
+    init {
+        viewModelScope.launch {
+            learningRepository.initializeIfNeeded()
+        }
+    }
 
     val learningItems: StateFlow<List<LearningItem>> = learningRepository.learningItems
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -73,6 +86,132 @@ class LearningViewModel(
     private val _analysisDisplay = MutableStateFlow(builtInDefaultLearningAnalysis())
     val analysisDisplay: StateFlow<LearningAnalysisResult> = _analysisDisplay.asStateFlow()
 
+    private val _pendingImport = MutableStateFlow<PendingImport?>(null)
+    val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
+
+    private val _openImportPreview = MutableStateFlow(false)
+    val openImportPreview: StateFlow<Boolean> = _openImportPreview.asStateFlow()
+
+    fun consumeOpenImportPreviewRequest() {
+        _openImportPreview.value = false
+    }
+
+    fun handleIncomingIntent(context: Context, intent: Intent?) {
+        viewModelScope.launch {
+            val pending = ImportIntentParser.parse(context, intent) ?: return@launch
+            _pendingImport.value = pending
+            _openImportPreview.value = true
+        }
+    }
+
+    fun stagePastedText(title: String, body: String, onDone: (Boolean) -> Unit) {
+        val trimmed = body.trim()
+        if (trimmed.isEmpty()) {
+            onDone(false)
+            return
+        }
+        val resolvedTitle = title.trim().ifBlank {
+            trimmed.lineSequence().firstOrNull { it.isNotBlank() }?.take(32) ?: "粘贴内容"
+        }
+        _pendingImport.value = PendingImport(
+            title = resolvedTitle,
+            body = trimmed,
+            source = ImportSource.PASTE_TEXT
+        )
+        onDone(true)
+    }
+
+    fun stageFromFile(context: Context, uri: Uri, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val name = TextImportHelper.queryDisplayName(context, uri) ?: "文件导入"
+            val result = withContext(Dispatchers.IO) {
+                DocumentImportHelper.extract(context, uri)
+            }
+            val pending = when (result) {
+                is DocumentImportHelper.ExtractResult.Text -> PendingImport(
+                    title = name,
+                    body = result.content,
+                    source = ImportSource.TEXTBOOK_OR_NOTES,
+                    fileUri = uri.toString()
+                )
+                is DocumentImportHelper.ExtractResult.Image -> {
+                    val ocr = ImageOcrHelper.recognizeText(context, uri)
+                    val body = ocr ?: TextImportHelper.imagePlaceholderBody(name, ImportSource.TEXTBOOK_OR_NOTES)
+                    PendingImport(
+                        title = name,
+                        body = body,
+                        source = ImportSource.TEXTBOOK_OR_NOTES,
+                        imageUri = uri.toString()
+                    )
+                }
+                is DocumentImportHelper.ExtractResult.Failed -> PendingImport(
+                    title = name,
+                    body = DocumentImportHelper.unsupportedFileBody(name, result.message),
+                    source = ImportSource.TEXTBOOK_OR_NOTES,
+                    fileUri = uri.toString()
+                )
+            }
+            _pendingImport.value = pending
+            onDone(true)
+        }
+    }
+
+    fun stageFromImageUri(
+        context: Context,
+        uri: Uri,
+        source: ImportSource,
+        defaultTitle: String,
+        onDone: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            val name = TextImportHelper.queryDisplayName(context, uri) ?: defaultTitle
+            val ocr = ImageOcrHelper.recognizeText(context, uri)
+            val body = ocr ?: TextImportHelper.imagePlaceholderBody(name, source)
+            _pendingImport.value = PendingImport(
+                title = name,
+                body = body,
+                source = source,
+                imageUri = uri.toString()
+            )
+            onDone(true)
+        }
+    }
+
+    fun updatePendingTitle(title: String) {
+        _pendingImport.value = _pendingImport.value?.copy(title = title)
+    }
+
+    fun updatePendingBody(body: String) {
+        _pendingImport.value = _pendingImport.value?.copy(body = body)
+    }
+
+    fun clearPendingImport() {
+        _pendingImport.value = null
+    }
+
+    fun confirmPendingImport(onDone: (Boolean) -> Unit) {
+        val pending = _pendingImport.value
+        if (pending == null || pending.body.trim().isEmpty()) {
+            onDone(false)
+            return
+        }
+        viewModelScope.launch {
+            learningRepository.importAndPersist(
+                title = pending.title,
+                rawText = pending.body.trim(),
+                importSource = pending.source,
+                fileUri = pending.fileUri,
+                imageUri = pending.imageUri
+            )
+            _analysisDisplay.value = aiRepository.analyzeLearningContent(
+                pending.body.trim(),
+                pending.source
+            ).getOrElse { builtInDefaultLearningAnalysis() }
+            _pendingImport.value = null
+            onDone(true)
+        }
+    }
+
     fun refreshAnalysisForDisplay() {
         viewModelScope.launch {
             val latest = learningRepository.getLatestImportOnce()
@@ -86,36 +225,16 @@ class LearningViewModel(
     }
 
     fun importPastedText(title: String, body: String, onDone: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val trimmed = body.trim()
-            if (trimmed.isEmpty()) {
-                onDone(false)
-                return@launch
-            }
-            learningRepository.importAndPersist(title, trimmed, ImportSource.PASTE_TEXT)
-            _analysisDisplay.value = aiRepository.analyzeLearningContent(trimmed, ImportSource.PASTE_TEXT)
-                .getOrElse { builtInDefaultLearningAnalysis() }
-            onDone(true)
+        stagePastedText(title, body) { staged ->
+            if (staged) _openImportPreview.value = true
+            onDone(staged)
         }
     }
 
     fun importFromFile(context: Context, uri: Uri, onDone: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val text = TextImportHelper.readUri(context, uri)
-            if (text.isNullOrBlank()) {
-                onDone(false)
-                return@launch
-            }
-            val name = TextImportHelper.queryDisplayName(context, uri) ?: "文件导入"
-            learningRepository.importAndPersist(
-                title = name,
-                rawText = text,
-                importSource = ImportSource.TEXTBOOK_OR_NOTES,
-                fileUri = uri.toString()
-            )
-            _analysisDisplay.value = aiRepository.analyzeLearningContent(text, ImportSource.TEXTBOOK_OR_NOTES)
-                .getOrElse { builtInDefaultLearningAnalysis() }
-            onDone(true)
+        stageFromFile(context, uri) { staged ->
+            if (staged) _openImportPreview.value = true
+            onDone(staged)
         }
     }
 
@@ -177,6 +296,9 @@ class LearningViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         require(modelClass == LearningViewModel::class.java)
         val app = application as LanxinZhijingApplication
-        return LearningViewModel(app.learningRepository) as T
+        return LearningViewModel(
+            learningRepository = app.learningRepository,
+            aiRepository = app.aiLearningRepository
+        ) as T
     }
 }

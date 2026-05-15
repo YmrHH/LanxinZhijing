@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -16,10 +18,25 @@ android {
         applicationId = "com.lanxin.zhijing"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 6
+        versionName = "0.1.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProps = Properties()
+        val lpFile = rootProject.file("local.properties")
+        if (lpFile.exists()) {
+            lpFile.inputStream().use { localProps.load(it) }
+        }
+        val rawBase = localProps.getProperty("ai.backend.baseUrl", "").trim()
+        val escapedBase = rawBase.replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField("String", "AI_BACKEND_BASE_URL", "\"$escapedBase\"")
+        val fbRaw = localProps.getProperty("ai.backend.fallbackToMock", "true").trim().lowercase()
+        val fallbackToMock = when (fbRaw) {
+            "false", "0", "no" -> "false"
+            else -> "true"
+        }
+        buildConfigField("boolean", "AI_BACKEND_FALLBACK_TO_MOCK", fallbackToMock)
     }
 
     buildTypes {
@@ -37,6 +54,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     kotlin {
         jvmToolchain(11)
@@ -61,6 +79,11 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.mlkit.text.recognition.chinese)
     ksp(libs.androidx.room.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)

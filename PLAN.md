@@ -1,1203 +1,732 @@
-接下来所有开发都必须严格按照本 PLAN 执行。
-
-请先在项目根目录创建一个 PLAN.md 文件，并把以下内容完整写入 PLAN.md。后续每次开发、修改、重构、修复 bug，都必须先读取 PLAN.md，并严格遵守其中的范围、功能、页面、技术栈和限制。
-
-如果用户没有明确提出新增功能，你不得擅自增加功能。
-如果用户没有明确提出删除功能，你不得擅自删除功能。
-如果发现需求不清楚，先按 PLAN.md 中已有内容实现，不要自行扩展。
-如果你认为某个功能需要调整，必须先说明原因，等待用户确认后再修改。
+# 蓝心知径 Android 开发计划（PLAN）
 
-==============================
-蓝心知径 Android APP 开发计划
-==============================
-
-一、项目定位
-
-项目名称：
-蓝心知径｜AI 知识树学习助手
-
-项目类型：
-移动端 Android 原生 APP Demo
-
-项目目标：
-开发一个可以在 Android 手机或模拟器上运行的原生 APP Demo，用于比赛展示和产品演示。
-
-核心定位：
-蓝心知径不是普通 AI 答题器，也不是普通文档总结器。
-
-普通 AI 的重点是直接回答问题。
-蓝心知径的重点是：
-1. 识别学习内容
-2. 判断核心考点
-3. 分析用户可能卡点
-4. 拆解知识节点
-5. 形成个人知识树
-6. 支持节点追问
-7. 支持费曼复述
-8. 根据复述结果更新掌握度
-
-本阶段只做可演示 Demo，不接真实 AI、不接真实 OCR、不接真实文档解析、不做登录注册、不做后台系统。
-
-二、技术栈固定要求
-
-必须使用：
-1. Kotlin
-2. Jetpack Compose
-3. Material 3
-4. Navigation Compose
-5. MVVM 简单架构
-6. Mock 数据
-7. minSdk 26
-
-不得使用：
-1. React
-2. Vue
-3. Flutter
-4. WebView
-5. H5 页面
-6. 后台管理系统
-7. 真实 AI 接口
-8. 真实登录注册
-9. 真实数据库服务端
-
-如果当前项目不是 Android 原生项目，需要创建标准 Android 项目结构。
-
-建议包名：
-com.lanxin.zhijing
-
-APP 名称：
-蓝心知径
-
-三、项目开发原则
-
-1. 严格按照本计划开发。
-2. 不允许随意增加页面。
-3. 不允许随意删除页面。
-4. 不允许随意增加复杂功能。
-5. 不允许把项目改成普通聊天机器人。
-6. 不允许把项目改成普通错题本。
-7. 不允许把项目改成单纯知识库。
-8. 不允许把项目做成 Web App。
-9. 所有功能先用 mock 数据实现。
-10. 所有页面必须能点击跳转。
-11. 所有代码必须保持清晰、组件化、可维护。
-12. 如果要调整功能范围，必须等待用户确认。
-
-四、固定页面范围
-
-本阶段只开发以下 6 个页面：
-
-1. HomeScreen
-首页 / 学习入口页
-
-2. AnalysisScreen
-AI 学习分析页
-
-3. KnowledgeTreeScreen
-个人知识树页
-
-4. NodeFocusScreen
-节点聚焦对话页
+> **强制规则**：此后每一次开发，必须先更新本文件，再写代码。不得先写代码后补计划。不得跳过本文件。不得擅自增删功能。不得跳阶段开发。
+>
+> 仓库：https://github.com/YmrHH/LanxinZhijing.git  
+> 基线提交（参考）：`8727d87e8ab89b15e0f75203197fef097e28eb87`
 
-5. ReviewScreen
-费曼复述与复习页
+---
 
-6. ProfileScreen
-我的页面，简单占位即可
+## 1. 项目定位
 
-不得擅自新增：
-1. 登录页
-2. 注册页
-3. 设置页
-4. 消息页
-5. 商城页
-6. 会员页
-7. 课程购买页
-8. 后台管理页
-9. 复杂个人资料页
-10. 真实上传文件页
+**项目名称**：蓝心知径｜AI 知识树学习助手
 
-五、固定底部导航
+**项目类型**：Android 原生应用（长期迭代为真实可用软件，非一次性 Demo）
 
-底部导航栏固定 4 项：
+**核心定位**：蓝心知径不是普通 AI 答题器，也不是普通文档总结器。
 
-1. 首页
-2. 知识树
-3. 复习
-4. 我的
+- 普通 AI：直接回答问题  
+- 蓝心知径：识别学习内容 → 判断考点 → 分析卡点 → 拆解知识节点 → 形成个人知识树 → 节点追问 → 费曼复述 → 更新掌握度
 
-底部导航要求：
-1. 固定在底部
-2. 当前页面高亮蓝色
-3. 首页点击进入 HomeScreen
-4. 知识树点击进入 KnowledgeTreeScreen
-5. 复习点击进入 ReviewScreen
-6. 我的点击进入 ProfileScreen
+**包名**：`com.lanxin.zhijing`  
+**应用名**：蓝心知径  
+**最低 SDK**：26
 
-不要擅自增加底部导航项。
+**固定页面（6 个，不得擅自增删）**：
 
-六、固定页面跳转关系
+| 页面 | 说明 |
+|------|------|
+| HomeScreen | 首页 / 学习入口 |
+| AnalysisScreen | AI 学习分析 |
+| KnowledgeTreeScreen | 个人知识树 |
+| NodeFocusScreen | 节点聚焦对话 |
+| ReviewScreen | 费曼复述与复习 |
+| ProfileScreen | 我的（可简单占位） |
 
-启动 APP 后默认进入：
-HomeScreen
+**底部导航（4 项，固定）**：首页 · 知识树 · 复习 · 我的
 
-HomeScreen 点击：
-1. 拍一道错题 -> AnalysisScreen
-2. 截图识别 -> AnalysisScreen
-3. 最近学习中的“导数与单调性” -> KnowledgeTreeScreen
+---
 
-AnalysisScreen 点击：
-1. 查看知识树 -> KnowledgeTreeScreen
-2. 获取分步提示 -> NodeFocusScreen
-3. 加入错题本 -> Toast：已加入错题本
+## 2. 长期开发原则
 
-KnowledgeTreeScreen 点击：
-1. 中心节点“导数与单调性” -> NodeFocusScreen
-2. 导数符号节点 -> NodeFocusScreen
-3. 单调区间节点 -> NodeFocusScreen
+1. 严格按照本 PLAN 分版本、分阶段执行。
+2. 每次开发前先读 PLAN，判断任务所属版本；PLAN 未记录则先更新 PLAN。
+3. 不允许随意增加/删除页面与核心功能。
+4. 不把项目改成普通聊天机器人、普通错题本或 Web App。
+5. 先 Mock / 本地持久化打通流程，再接入 OCR、真实 AI、系统入口等重能力。
+6. UI 保持简洁、可维护；MVVM：UI → ViewModel → Repository →（Room / AI 抽象）。
+7. 需求不清时按 PLAN 已有内容实现，扩展须用户确认。
+8. 代码保持组件化；密钥与隐私按本 PLAN 第十三节执行。
 
-NodeFocusScreen 点击：
-1. 分步提示 -> 展开提示卡片
-2. 讲给同学听 -> ReviewScreen
-3. 相关错题 -> Toast：已展示相关错题
-4. 加入复习 -> Toast：已加入复习计划
+---
 
-ReviewScreen 点击：
-1. 下一步：完成 2 道同类题 -> Toast：已生成 2 道同类练习题
+## 3. 技术栈固定要求
 
-七、页面一：HomeScreen 首页 / 学习入口页
+**必须使用**：
 
-页面参考：
-01_学习入口页
+- Kotlin
+- Jetpack Compose + Material 3
+- Navigation Compose
+- MVVM（ViewModel + Repository）
+- Room + KSP（本地持久化，自 V0.2 起）
+- Kotlin Coroutines + Flow
+- `minSdk = 26`
 
-必须包含：
+**不得使用**（除非 PLAN 明确允许的新阶段）：
 
-顶部标题：
-蓝心知径
+- React / Vue / Flutter / WebView 作为主界面
+- 后台管理系统
+- 客户端硬编码 AppKEY、直连生产蓝心大模型（V0.5 前）
+- 除 PLAN 允许的 **ML Kit 设备端 OCR** 外，擅自接入其它 OCR / 文档解析云服务（禁止）
+- 登录注册、云同步、会员、支付、课程商城、社区（未规划前禁止）
 
-副标题：
-把题目、教材和文档变成你的个人知识树
+**依赖版本（当前）**：见 `gradle/libs.versions.toml`（Room 2.7.0 + KSP 2.0.21；CameraX；**ML Kit 中文 OCR**；`gradle.properties` 含 `android.disallowKotlinSourceSets=false` 以配合 KSP）。
 
-今日学习建议卡片：
-标题：今日学习建议
-主文案：先补「导数符号与单调区间」
-说明：根据最近错题与复述表现生成
-掌握度：42%
-进度条：蓝色
+---
 
-四个入口卡片，2 x 2 布局：
-1. 拍一道错题
-副标题：错因诊断
-
-2. 导入教材/笔记
-副标题：生成知识树
-
-3. 粘贴文档内容
-副标题：拆解概念
+## 4. 当前版本状态
 
-4. 截图识别
-副标题：系统级入口
+### 4.1 当前版本状态：0.1.2（审计基线）
 
-最近学习列表：
-1. 导数与单调性 42%
-2. 经济基础与上层建筑 68%
-3. 细胞呼吸 55%
-4. 工业革命 73%
+**0.1.2 已具备**：
 
-每个最近学习项必须包含：
-1. 标题
-2. 百分比
-3. 进度条
-4. 圆角卡片样式
+1. Android 原生项目结构  
+2. Kotlin + Jetpack Compose + Material3  
+3. Navigation Compose  
+4. 六个基础页面：Home / Analysis / KnowledgeTree / NodeFocus / Review / Profile  
+5. 底部导航  
+6. `picture/` 原型图目录（含 `tubiao.png`）  
+7. **AI 抽象层**：`AiLearningRepository`、`MockAiLearningRepository`、`VivoLanxinAiRepository`（占位）、`AiLearningModels`、`AiLearningFixtures`、`ImportSource`  
+8. Room 依赖（KSP 编译）  
+9. **本地数据库**：Entity / DAO / `AppDatabase` / `LocalMappers` / `LearningRepository`  
+10. 首页「最近学习」从 Room 读取（`learning_content`）  
+11. 知识树节点与关系从 Room 读取  
+12. 节点对话写入 `chat_message`  
+13. 费曼复述写入 `review_record` + 掌握度 `mastery_record` / `knowledge_node`  
+14. **V0.3 雏形**：粘贴文本导入、SAF 文件选择 UTF-8 文本导入（见第七节标注，**不作正式 V0.3 验收**）
 
-八、页面二：AnalysisScreen AI 学习分析页
+**0.1.2 仍存在的问题（由 0.1.3 处理）**：
 
-页面参考：
-02_AI学习分析页
+1. 本 PLAN 曾停留在「一次性 Demo」表述，已在本版重写为长期路线。  
+2. V0.2 计划与代码不同步 → 0.1.3 对齐并验收。  
+3. V0.3 仅有部分导入雏形，无系统分享、划词、拍照等 → 留待 V0.3 正式开发。  
+4. `AndroidManifest.xml` 无系统分享文本/图片/文件、划词分析入口。  
+5. 文件导入仅简单 UTF-8，不支持 PDF/DOCX/图片 OCR。  
+6. `LanxinZhijingApplication` 使用 `runBlocking` 初始化，可能阻塞启动 → **0.1.3 修复**。  
+7. `versionName` 曾为 `1.0`，未体现语义化版本 → **0.1.3 改为 0.1.3**。  
+8. Room 持久化需完整人工验证：杀进程重启后数据仍在。  
+9. 禁止现在接真实蓝心大模型、真实 OCR、登录、云同步、会员、社区、课程商城。
 
-必须包含：
+### 4.2 当前执行版本：0.1.7（V0.5 后端代理骨架，已完成）
 
-顶部标题：
-AI 学习分析
+**0.1.7 已完成**：`BuildConfig` 从 `local.properties` 读取 `ai.backend.baseUrl` / `ai.backend.fallbackToMock`；`BackendProxyAiLearningRepository` + `FallbackAiLearningRepository` + `AiRepositoryFactory`；§12.8 JSON 契约；`INTERNET`；**Debug** `usesCleartextTraffic`；`ProfileScreen` AI 通道说明；`versionName = 0.1.7`。
 
-副标题：
-已识别你的学习内容
+**0.1.6 已完成（归档）**：ML Kit 中文 OCR；移除 PDFBox；PDF 为 V0.5 AI 占位。
 
-识别结果卡片：
-内容类型：数学错题
-核心考点：导数与函数单调性
+**下一步（V0.5 后续）**：服务端对接 vivo 蓝心、**PDF 交模型/后端解析**、鉴权头与重试 UI。
 
-关联知识点标签：
-1. 导数计算
-2. 导数符号
-3. 单调区间
-4. 极值判断
-5. 参数讨论
+---
 
-可能卡点卡片：
-标题：可能卡点
-内容：
-你可能不是不会求导，而是不熟悉“导数符号变化”和“函数增减性”的关系。
+## 6. 当前阶段执行计划（0.1.7 · V0.5 后端代理骨架）
 
-建议学习路径：
-导数定义 -> 几何意义 -> 导数符号 -> 单调性 -> 极值判断
+### 6.1 本次开发计划（0.1.7）
 
-底部按钮：
-1. 查看知识树
-2. 获取分步提示
-3. 加入错题本
+**任务目标**：`AiRepositoryFactory` 根据 `BuildConfig` 装配 `Mock` / `BackendProxy` / `Fallback`；约定后端路径与 JSON 字段（见 §12.8）；`LearningViewModelFactory` 注入 `Application` 提供的 `AiLearningRepository`；`INTERNET` 权限；**debug** `usesCleartextTraffic=true`（release 仍禁止明文）。
 
-浅绿色提示卡：
-标题：比普通 AI 多做一步
-内容：
-不是直接给答案，而是先判断：考什么、卡在哪、先补哪条知识链。
+**允许修改**：`PLAN.md`、`app/build.gradle.kts`（`buildConfig`、从 `local.properties` 注入字段）、`AndroidManifest.xml`、`src/debug/AndroidManifest.xml`（新建）、`LanxinZhijingApplication.kt`、`data/ai/*.kt`（新增/调整）、`viewmodel/LearningViewModel.kt`（仅 Factory 注入）、`ui/screens/ProfileScreen.kt`（仅 AI 通道文案）
 
-九、页面三：KnowledgeTreeScreen 个人知识树页
+**禁止**：仓库内硬编码 AppKEY、客户端直连 vivo 生产 API、改 Room Entity、新增底部 Tab 页面
 
-页面参考：
-03_个人知识树页
+**验收**：未配置后端时行为与 0.1.6 一致（Mock）；配置合法后端 URL 时发起 POST 且解析成功则走远端；失败且 `ai.backend.fallbackToMock=true` 时回退 Mock；`versionName = "0.1.7"`；`assembleDebug` 通过（**已完成**）
 
-必须包含：
+---
 
-顶部标题：
-我的知识树
+## 6-legacy-016. 历史：0.1.6 · V0.4 图片 OCR（已完成）
 
-副标题：
-中心节点：导数与单调性 42%
+<details>
+<summary>0.1.6 范围（归档）</summary>
 
-知识树区域：
-使用 Jetpack Compose Canvas 或 Box 叠加实现。
-不得引入复杂图谱库。
+**任务目标**：`ImageOcrHelper`（ML Kit Chinese）；`ImportIntentParser` / `stageFromFile` / `stageFromImageUri` 异步 OCR；移除 pdfbox。
 
-中心节点：
-导数与单调性
-42%
+**验收**：`versionName = "0.1.6"`；`assembleDebug` 通过。
 
-周围节点：
-1. 函数基础 80% 绿色
-2. 导数定义 70% 绿色
-3. 几何意义 55% 黄色
-4. 导数符号 45% 黄色
-5. 单调区间 42% 蓝色
-6. 极值判断 38% 红色
-7. 参数讨论 25% 红色
+</details>
 
-节点之间连线：
-1. 函数基础 -> 导数定义
-2. 导数定义 -> 导数与单调性
-3. 导数符号 -> 单调区间
-4. 单调区间 -> 极值判断
-5. 导数与单调性 -> 参数讨论
+---
 
-关系示例卡片：
-标题：关系示例
+## 6-legacy-015. 历史：0.1.5 · 多格式文档导入（已完成）
 
-内容：
-绿色圆点：函数基础 -> 前置 -> 导数定义
-蓝色圆点：导数符号 -> 影响 -> 单调区间
-红色圆点：单调区间 -> 前置 -> 极值判断
+<details>
+<summary>0.1.5 范围（归档）</summary>
 
-底部建议：
-系统建议：先复习“导数符号与单调区间”
+**支持格式（当时）**：纯文本、~~pdf（本地）~~、docx、epub、odt、rtf、图片占位、doc 提示。
 
-十、页面四：NodeFocusScreen 节点聚焦对话页
+**验收**：`versionName = "0.1.5"`；单文件 10MB。
 
-页面参考：
-04_节点聚焦对话页
+</details>
 
-必须包含：
+---
 
-顶部标题：
-节点聚焦
+## 5. 版本路线图
 
-副标题：
-导数与单调性 · 掌握度 42%
+路线图分两层：**语义版本**（0.1.x，工程整理与小步验收）与 **能力版本**（V0.x，产品能力阶段）。
 
-当前节点卡片：
-当前节点：导数与单调性
-掌握度：42%
-蓝色进度条
+### 5.1 能力版本（V0.x）
 
-相关节点标签：
-1. 导数符号
-2. 单调区间
-3. 极值判断
+| 阶段 | 名称 | 目标 |
+|------|------|------|
+| **V0.1** | 可运行原型版 | 基础页面、底部导航、Mock 数据、Mock AI 流程、UI 还原 |
+| **V0.2** | 本地数据持久化版 | Room：学习记录、知识节点、关系、对话、复述、掌握度可保存并在重启后保留 |
+| **V0.3** | 真实导入能力版 | 拍照、文件选择、粘贴、相册截图、系统分享（文本/图片/文件）、划词分析入口；导入预览与修正（ImportPreviewScreen） |
+| **V0.4** | OCR 与文档解析版 | 图片/截图/拍照 **ML Kit OCR**；TXT/DOCX/EPUB 等本地抽取；导入预览与用户修正；**PDF 正文以 V0.5 AI/后端为主（客户端占位+手改）** |
+| **V0.5** | 真实 AI 学习分析版 | 接入 vivo 蓝心大模型或后端代理；**PDF 全文/扫描件等可由模型解析**；真实分析、知识点与关系生成 |
+| **V0.6** | 节点追问可用版 | 节点上下文真实追问，保存对话历史 |
+| **V0.7** | 费曼复述真实评分版 | AI 评分、更新掌握度、生成复习任务 |
+| **V0.8** | 复习计划与提醒版 | 待复习列表、任务状态、本地提醒、WorkManager |
+| **V0.9** | 稳定性与隐私优化版 | 错误处理、加载/空状态、权限与隐私说明、失败重试、大文件限制 |
 
-对话内容：
+### 5.2 语义版本（近期）
 
-AI：
-你现在卡在“导数符号如何影响函数走势”。建议先理解：f'(x)>0 表示函数在该区间内整体上升。
+| 版本 | 对应能力 | 说明 |
+|------|----------|------|
+| 0.1.1 | V0.1 | 原型与 Mock AI 抽象 |
+| 0.1.2 | V0.2 主体 + V0.3 雏形 | Room 与导入雏形并存 |
+| **0.1.3** | V0.2 验收收尾 + 图标 | 已完成 |
+| **0.1.4** | **正式 V0.3（第一批）** | **已完成** |
+| **0.1.5** | **V0.4 多格式文档导入（第一批）** | **已完成** |
+| **0.1.6** | **V0.4 图片 OCR；PDF 延后 V0.5 AI** | **已完成** |
+| **0.1.7** | **V0.5 第一批：后端代理 + Fallback + BuildConfig** | **已完成** |
 
-我：
-为什么 f'(x)>0 时，函数就是递增的？
+---
 
-AI：
-可以把导数理解成函数图像在某一点的倾斜方向。当 f'(x)>0 时，切线斜率为正，图像向右上方延伸。
+## 6-legacy-014. 历史：0.1.4 · 正式 V0.3（已完成）
 
-快捷按钮：
-1. 分步提示
-2. 讲给同学听
-3. 相关错题
-4. 加入复习
+<details>
+<summary>0.1.4 范围（归档）</summary>
 
-点击“分步提示”后展开：
+### 6.1 本次开发计划（0.1.4）
 
-提示 1：先判断导数符号
-提示 2：再看该符号在区间内是否稳定
-提示 3：如果 f'(x)>0，函数在该区间递增；如果 f'(x)<0，函数在该区间递减。
+**任务目标**：完成 V0.3 第一批——导入预览页、CameraX 拍照、相册选图、系统分享（文本/图片/文件）、划词 `ACTION_PROCESS_TEXT`；导入后仍用 Mock AI 分析。
 
-底部输入框：
-placeholder：
-继续追问这个知识点...
+**允许修改**：
 
-发送逻辑：
-用户输入文字后，追加用户气泡，并自动追加一条 mock AI 回复：
-这个问题仍然和导数符号、单调区间有关，我建议先回到导数的几何意义理解。
+- `PLAN.md`
+- `app/build.gradle.kts`、`gradle/libs.versions.toml`（CameraX、versionCode/Name）
+- `AndroidManifest.xml`、`res/xml/file_paths.xml`
+- `MainActivity.kt`
+- `navigation/`、`viewmodel/LearningViewModel.kt`
+- `data/importutil/`（意图解析、文本读取）
+- `ui/screens/`（`ImportPreviewScreen`、`CameraCaptureScreen`；调整 `HomeScreen`）
+- 不修改 Room Entity 结构（沿用 `import_record`）
 
-十一、页面五：ReviewScreen 费曼复述与复习页
+**禁止修改**：
 
-页面参考：
-05_费曼复述与复习页
+- 不接真实蓝心大模型 / OCR / PDF·DOCX 解析
+- 不新增登录、云同步、会员、商城
+- 不删除既有六主页面
+- 不删除已有 V0.3 雏形逻辑（改为走预览页）
 
-必须包含：
+**新增页面（V0.3 允许）**：
 
-顶部标题：
-讲给同学听
+- `ImportPreviewScreen`：导入预览与用户修正（非底部 Tab）
+- `CameraCaptureScreen`：CameraX 拍照（非底部 Tab）
 
-副标题：
-费曼复述 · 掌握度更新
+### 6.2 0.1.4 必须完成
 
-AI 提问卡片：
-标题：AI 提问
-内容：
-请你不用公式，讲给同学听：为什么导数可以判断函数的增减？
+1. `PendingImport` 暂存 → `ImportPreviewScreen` 编辑 → 确认落库 → `AnalysisScreen`  
+2. 首页：拍错题 → CameraX；截图识别 → 相册选图；粘贴/文件 → 预览页  
+3. `MainActivity`：`ACTION_SEND`（text/plain、image/*、*/*）与 `ACTION_PROCESS_TEXT`  
+4. 图片导入占位文案（标明 V0.4 OCR），用户可手改后提交  
+5. `versionName = "0.1.4"`，`versionCode = 3`  
+6. `assembleDebug` 通过  
 
-用户回答卡片：
-标题：用户回答
-内容：
-因为导数表示函数变化的方向。导数大于 0 时，函数值会增加；导数小于 0 时，函数值会减少。
+### 6.3 0.1.4 不允许做
 
-AI 反馈卡片：
-标题：AI 反馈
-得分：78 / 100
-等级标签：基本理解
+1. 真实 OCR / PDF / DOCX  
+2. 真实 vivo 蓝心 API  
+3. 登录注册、云同步、会员、支付、社区  
 
-做得好的地方：
-说出了导数和函数变化趋势有关。
+### 6.4 0.1.4 验收标准
 
-还需要补充：
-1. 可以补充“切线斜率”的解释
-2. 判断单调性时，要看区间内导数符号是否稳定
-3. 还没有说明导数符号变化与极值点的关系
+1. Gradle 编译通过  
+2. 粘贴/选文件/选图/拍照/系统分享/划词均可进入导入预览  
+3. 预览页可改标题与正文，确认后进入分析页且写入 Room  
+4. 六主页面与底部导航正常  
+5. 无 AppKEY、无真实 AI 网络请求  
 
-掌握度变化卡片：
-标题：掌握度变化
-内容：导数与单调性
-变化：42% -> 68%
-使用绿色进度条展示
+</details>
 
-底部主按钮：
-下一步：完成 2 道同类题
+---
 
-十二、页面六：ProfileScreen 我的页面
+## 6-legacy. 历史：0.1.3 执行计划（已完成）
 
-ProfileScreen 只做简单占位，不要扩展复杂功能。
+<details>
+<summary>0.1.3 范围（归档）</summary>
 
-必须包含：
-标题：我的
-副标题：学习画像与个人设置
+### 6.1 本次开发计划（0.1.3）
 
-占位卡片：
-1. 学习天数：7 天
-2. 已沉淀知识点：26 个
-3. 待复习节点：5 个
+**允许修改的文件**：
 
-提示文案：
-个人学习画像将在后续版本完善。
+- `PLAN.md`
+- `app/build.gradle.kts`（仅 `versionCode` / `versionName`）
+- `app/src/main/java/com/lanxin/zhijing/LanxinZhijingApplication.kt`
+- `app/src/main/java/com/lanxin/zhijing/viewmodel/LearningViewModel.kt`（仅初始化相关）
 
-不得添加：
-1. 登录注册
-2. 会员系统
-3. 个人隐私资料
-4. 账号绑定
-5. 设置中心
+**禁止修改**：
 
-十三、UI 风格固定要求
+- 不新增页面（含 ImportPreviewScreen）
+- 不修改 `AndroidManifest.xml` 增加分享/划词/相机权限
+- 不接 `VivoLanxinAiRepository` 真实网络
+- 不接 OCR / CameraX / PDF·DOCX 解析
+- 不删除已有 V0.3 导入雏形代码
+- 不重做 UI 视觉
 
-整体风格必须参考原型图。
+**验收标准**：见第十一节「0.1.3 验收标准」。
 
-颜色：
+### 6.2 0.1.3 只允许做
 
-背景色：
-#F6FAFD
+1. 更新 PLAN.md，建立长期开发计划（本章）。  
+2. 记录「当前版本状态 0.1.2」与「当前执行 0.1.3」。  
+3. 写入「每次开发必须先更新计划」强制流程。  
+4. 核对 Room 表 / DAO / Repository 与 V0.2 要求一致（代码审查）。  
+5. 验证：最近学习、知识树、对话、复述、掌握度从 Room 读写。  
+6. 优化 App 初始化：移除 `Application` 中 `runBlocking`。  
+7. `versionName = "0.1.3"`，`versionCode` 递增。  
+8. 确认无 AppKEY、无真实 AI 请求。  
+9. 不破坏现有 UI；不新增无关页面。
 
-主色蓝：
-#3F7BFF
+### 6.3 0.1.3 不允许做
 
-绿色：
-#42C77A
+1. 不接真实 vivo 蓝心大模型  
+2. 不接真实 OCR  
+3. 不做 CameraX 拍照  
+4. 不做 PDF/DOCX 解析  
+5. 不做系统分享入口  
+6. 不做 `ACTION_PROCESS_TEXT`  
+7. 不做登录注册、云同步、会员、支付、课程、社区、排行榜  
+8. 不重构成其他技术栈  
+9. 不删除已有页面  
+10. 不改成普通聊天机器人  
 
-黄色：
-#F6AD3D
+</details>
 
-红色：
-#EF5B5B
+---
 
-深色文字：
-#152033
+## 7. 已完成内容
 
-次级文字：
-#65758B
+### V0.1（已完成）
 
-边框色：
-#DCE8F5
+- [x] 六页面 + 底部导航 + 跳转关系  
+- [x] Mock 数据（`MockData`）  
+- [x] `AiLearningRepository` + `MockAiLearningRepository`（默认）  
+- [x] `VivoLanxinAiRepository` 占位（`Result.failure`，无网络）  
+- [x] UI 主题与组件（`AppCard`、`PageHeader` 等）  
 
-卡片要求：
-1. 大圆角
-2. 浅色边框
-3. 轻微阴影
-4. 内边距充足
-5. 不要厚重商务风
-6. 不要花哨渐变
-7. 不要大面积深色背景
+### V0.2（主体已完成，0.1.3 验收收尾）
 
-字体要求：
-1. 使用中文系统字体
-2. 页面标题加大加粗
-3. 卡片标题加粗
-4. 副标题使用灰蓝色
-5. 不要出现英文占位文案
+- [x] Room：`learning_content`、`knowledge_node`、`knowledge_relation`、`chat_message`、`review_record`、`mastery_record`、`import_record`  
+- [x] `LearningRepository` 统一封装数据库访问  
+- [x] ViewModel 经 Repository 暴露 Flow / StateFlow  
+- [x] UI 不直接访问 DAO  
+- [x] 冷启动种子数据 `initializeIfNeeded()`（幂等）  
+- [x] 费曼 mock 持久化 `ensureMockFeynmanPersisted()`（复习页触发）  
+- [x] **0.1.3**：移除启动 `runBlocking`  
+- [ ] **0.1.3**：杀进程重启人工验收清单（见第十一节，须真机确认）  
 
-补充要求：UI 参考图存放位置
+### V0.3 正式开发（0.1.4 已完成）
 
-本项目的 UI 原型参考图已经统一放在项目根目录的 picture 目录下。
+- [x] 雏形：粘贴、SAF 文本文件（升级为预览流）  
+- [x] **0.1.4**：`ImportPreviewScreen`  
+- [x] **0.1.4**：CameraX 拍照错题  
+- [x] **0.1.4**：相册选截图  
+- [x] **0.1.4**：系统分享 text/image/file  
+- [x] **0.1.4**：划词 `ACTION_PROCESS_TEXT`  
+- [x] V0.4：**0.1.5** docx/epub/odt/rtf/多编码 TXT 本地抽取  
+- [x] V0.4：**0.1.6** 图片 ML Kit OCR；PDF 改 V0.5 AI 占位策略  
+- [ ] V0.5：真实 AI + **PDF 由模型/后端解析**  
+- [x] **0.1.7**：后端代理 HTTP + BuildConfig + Fallback Mock（**不含**客户端 AppKEY）  
 
-picture 目录中包含以下参考图：
+---
 
-1. 01_学习入口页.png
-2. 02_AI学习分析页.png
-3. 03_个人知识树页.png
-4. 04_节点聚焦对话页.png
-5. 05_费曼复述与复习页.png
+## 8. 未完成内容
 
-后续开发 UI 页面时，必须优先参考 picture 目录下对应的原型图。
+| 项 | 计划阶段 |
+|----|----------|
+| PDF 全文（含扫描）由 AI/后端解析 | **V0.5** |
+| 真实蓝心大模型 | V0.5 |
+| 节点真实追问链路强化 | V0.6 |
+| 费曼真实 AI 评分 | V0.7 |
+| 复习计划与 WorkManager 提醒 | V0.8 |
+| 全链路错误处理与隐私页 | V0.9 |
+| 登录 / 云同步 / 会员 / 商城 | 未规划，禁止擅自开发 |
 
-页面对应关系：
+---
 
-HomeScreen 对应：
-picture/01_学习入口页.png
+## 9. 禁止跳阶段开发的内容
 
-AnalysisScreen 对应：
-picture/02_AI学习分析页.png
+在未更新 PLAN 并获用户确认前，**禁止**：
 
-KnowledgeTreeScreen 对应：
-picture/03_个人知识树页.png
+- V0.3 前：系统 Manifest 分享入口、划词、拍照、ImportPreviewScreen  
+- V0.4 前：~~真实 OCR~~（**0.1.6 起允许设备端 ML Kit 图片 OCR**）；**不在此阶段强做客户端 PDF 全文库**  
+- V0.5 前：客户端 AppKEY、直连蓝心生产 API、`VivoLanxinAiRepository` 真实请求  
+- 任意阶段：登录、云同步、会员、支付、课程商城、社区  
+- 删除六页面或改为非知识树主线产品  
 
-NodeFocusScreen 对应：
-picture/04_节点聚焦对话页.png
+**允许保留**：已存在的 V0.3 导入雏形代码，但不得当作 V0.3 已验收。
 
-ReviewScreen 对应：
-picture/05_费曼复述与复习页.png
+---
 
-开发要求：
-
-1. 每开发一个页面前，先查看 picture 目录中对应的参考图。
-2. 页面布局、卡片层级、颜色风格、圆角、间距、按钮样式、底部导航，都要尽量贴近参考图。
-3. 不允许在没有用户确认的情况下，随意改变原型图中的页面结构。
-4. 不允许把参考图风格改成其他 APP 风格。
-5. 如果参考图和 PLAN.md 中的文字要求有冲突，优先遵守 PLAN.md 的功能范围，同时尽量保持参考图视觉效果。
-6. 如果 picture 目录中缺少某张图，先说明缺失情况，不要自行脑补新增页面。
-7. ProfileScreen 没有专门参考图，只做 PLAN.md 中规定的简单占位页面即可。
+## 10. 每次开发前的强制流程
 
-十四、固定数据模型
+每次开发前**必须**：
 
-Models.kt 中必须包含：
+1. 读取 `PLAN.md`。  
+2. 判断用户要求属于哪个版本/阶段。  
+3. 若 PLAN 未记录本次任务 → **先更新 PLAN**。  
+4. 在 PLAN 中新增「本次开发计划」（允许改动的文件、禁止项、验收标准）。  
+5. **然后**才允许写代码。  
 
-data class LearningItem(
-    val id: String,
-    val title: String,
-    val progress: Int,
-    val status: String
-)
+---
 
-data class KnowledgeNode(
-    val id: String,
-    val label: String,
-    val progress: Int,
-    val type: String
-)
+## 11. 每次开发后的验收流程
 
-data class KnowledgeRelation(
-    val from: String,
-    val relation: String,
-    val to: String
-)
+每次开发后**必须**：
 
-data class ChatMessage(
-    val role: String,
-    val content: String
-)
+1. 更新 PLAN「开发记录」。  
+2. 说明完成了哪些任务、修改了哪些文件。  
+3. 说明是否影响已有功能。  
+4. 说明是否通过自测（Gradle 构建、关键路径）。  
+5. 给出下一步建议。  
+6. 未完成须写明原因。  
 
-十五、固定 Mock 数据
+### 11.1 0.1.3 验收标准
 
-MockData.kt 中必须包含：
+1. Gradle Sync / `assembleDebug` 通过  
+2. App 正常启动（无 `runBlocking` 阻塞 `Application.onCreate`）  
+3. 首页显示最近学习（种子或导入项）  
+4. 杀进程重启后最近学习仍在  
+5. 知识树：中心节点 + 周围节点 + 关系线  
+6. 节点聚焦：历史对话可见；新发消息后重启仍在  
+7. 复习页：费曼记录可保存；掌握度 42%→68% 后首页/知识树同步  
+8. Profile 统计来自 DB 或占位不崩溃  
+9. 无真实 AI 请求、无 OCR、无 AppKEY  
+10. 无新增无关页面  
+11. PLAN 已更新为长期计划并记录 0.1.3  
+12. `versionName = "0.1.3"`  
 
-learningItems:
-1. derivative / 导数与单调性 / 42 / weak
-2. economy / 经济基础与上层建筑 / 68 / good
-3. cell / 细胞呼吸 / 55 / medium
-4. industry / 工业革命 / 73 / good
+---
 
-knowledgeNodes:
-1. function / 函数基础 / 80 / good
-2. definition / 导数定义 / 70 / good
-3. geometry / 几何意义 / 55 / medium
-4. symbol / 导数符号 / 45 / medium
-5. monotonic / 单调区间 / 42 / focus
-6. extreme / 极值判断 / 38 / weak
-7. parameter / 参数讨论 / 25 / weak
+## 12. AI 接入规范
 
-relations:
-1. 函数基础 -> 前置 -> 导数定义
-2. 导数符号 -> 影响 -> 单调区间
-3. 单调区间 -> 前置 -> 极值判断
+### 12.1 架构原则
 
-initialChatMessages:
-1. AI：你现在卡在“导数符号如何影响函数走势”。建议先理解：f'(x)>0 表示函数在该区间内整体上升。
-2. USER：为什么 f'(x)>0 时，函数就是递增的？
-3. AI：可以把导数理解成函数图像在某一点的倾斜方向。当 f'(x)>0 时，切线斜率为正，图像向右上方延伸。
+- UI 只依赖 ViewModel；ViewModel 依赖 `AiLearningRepository`。  
+- **当前默认**：未配置 `ai.backend.baseUrl` 时为 `MockAiLearningRepository`；配置后为 `BackendProxyAiLearningRepository`（可包 `FallbackAiLearningRepository`）。  
+- **V0.5**：服务端持有 AppKEY；客户端仅调自有后端（见 §12.8）。  
+- 文档入口：https://aigc.vivo.com.cn/#/document/index?id=1746  
 
-十六、固定项目结构
+### 12.2 接口定义
 
-项目结构应尽量保持如下：
-
-app/src/main/java/com/lanxin/zhijing/
-├── MainActivity.kt
-├── navigation/
-│   └── AppNavGraph.kt
-├── data/
-│   ├── Models.kt
-│   └── MockData.kt
-├── viewmodel/
-│   └── LearningViewModel.kt
-└── ui/
-    ├── theme/
-    │   ├── Color.kt
-    │   ├── Theme.kt
-    │   └── Type.kt
-    ├── components/
-    │   ├── AppScaffold.kt
-    │   ├── BottomNavBar.kt
-    │   ├── PageHeader.kt
-    │   ├── AppCard.kt
-    │   ├── ProgressBar.kt
-    │   ├── TagChip.kt
-    │   ├── LearningItemCard.kt
-    │   ├── KnowledgeGraph.kt
-    │   └── ChatBubble.kt
-    └── screens/
-        ├── HomeScreen.kt
-        ├── AnalysisScreen.kt
-        ├── KnowledgeTreeScreen.kt
-        ├── NodeFocusScreen.kt
-        ├── ReviewScreen.kt
-        └── ProfileScreen.kt
-
-十七、必须封装的组件
-
-必须封装：
-
-1. AppScaffold
-负责整体页面结构和底部导航栏
-
-2. BottomNavBar
-负责底部导航
-
-3. PageHeader
-负责页面标题和副标题
-
-4. AppCard
-负责统一卡片样式
-
-5. ProgressBar
-负责统一进度条
-
-6. TagChip
-负责知识点标签
-
-7. LearningItemCard
-负责最近学习卡片
-
-8. KnowledgeGraph
-负责知识树展示
-
-9. ChatBubble
-负责 AI 和用户对话气泡
-
-不得把所有 UI 都写在 MainActivity.kt 中。
-
-十八、阶段开发顺序
-
-必须按以下顺序开发，不要跳步：
-
-第一阶段：项目基础搭建
-1. 创建 Android Compose 项目
-2. 配置 Kotlin、Compose、Material3、Navigation Compose
-3. 设置包名和 APP 名称
-4. 创建基础目录结构
-5. 创建主题颜色
-
-第二阶段：基础组件开发
-1. AppScaffold
-2. BottomNavBar
-3. PageHeader
-4. AppCard
-5. ProgressBar
-6. TagChip
-
-第三阶段：Mock 数据和 ViewModel
-1. Models.kt
-2. MockData.kt
-3. LearningViewModel.kt
-
-第四阶段：首页开发
-1. HomeScreen
-2. 今日学习建议卡片
-3. 四个入口卡片
-4. 最近学习列表
-5. 跳转到 AnalysisScreen 和 KnowledgeTreeScreen
-
-第五阶段：AI 学习分析页开发
-1. AnalysisScreen
-2. 识别结果卡片
-3. 关联知识点标签
-4. 可能卡点卡片
-5. 建议学习路径
-6. 三个按钮
-7. 页面跳转和 Toast
-
-第六阶段：知识树页开发
-1. KnowledgeTreeScreen
-2. KnowledgeGraph
-3. 节点圆形布局
-4. 节点连线
-5. 关系示例卡片
-6. 节点点击跳转
-
-第七阶段：节点聚焦对话页开发
-1. NodeFocusScreen
-2. 当前节点卡片
-3. 相关节点标签
-4. ChatBubble
-5. 快捷按钮
-6. 分步提示展开
-7. 输入框和 mock 回复
-
-第八阶段：费曼复述页开发
-1. ReviewScreen
-2. AI 提问卡片
-3. 用户回答卡片
-4. AI 反馈卡片
-5. 掌握度变化卡片
-6. 下一步按钮和 Toast
-
-第九阶段：我的页面开发
-1. ProfileScreen
-2. 简单学习画像占位
-3. 不做复杂功能
-
-第十阶段：整体检查
-1. Gradle Sync
-2. App 启动
-3. 页面跳转
-4. 底部导航
-5. Toast
-6. 输入框
-7. 知识树显示
-8. 无明显报错
-9. 无英文占位文案
-10. UI 风格接近原型图
-
-十九、禁止擅自开发的功能
-
-除非用户明确要求，否则不得开发：
-
-1. 登录注册
-2. 账号系统
-3. 会员系统
-4. 支付系统
-5. 课程购买
-6. 真实 AI 接口
-7. 真实 OCR
-8. 真实拍照识别
-9. 真实文件上传
-10. 真实数据库云同步
-11. 社区功能
-12. 排行榜
-13. 打卡分享
-14. 消息通知系统
-15. 设置页
-16. 主题切换
-17. 多语言
-18. 复杂动画
-19. 后台管理系统
-20. WebView 页面
-
-二十、允许的最小交互
-
-本阶段只允许这些交互：
-
-1. 页面跳转
-2. Toast 提示
-3. 分步提示展开/收起
-4. 输入框输入文字
-5. 发送后追加 mock 对话
-6. 知识树节点点击
-7. 底部导航切换
-
-二十一、验收标准
-
-每次开发完成后必须自查：
-
-1. 是否严格遵守 PLAN.md
-2. 是否没有擅自新增功能
-3. 是否没有擅自删除功能
-4. 是否可以正常 Gradle Sync
-5. 是否可以正常运行到模拟器或真机
-6. 首页是否正常显示
-7. 五个核心页面是否都能进入
-8. 底部导航是否正常
-9. 知识树是否有节点和连线
-10. 节点聚焦页是否能模拟对话
-11. 费曼复述页是否有评分和掌握度变化
-12. 我的页面是否只是简单占位
-13. UI 是否接近原型图
-14. 是否没有英文占位文案
-15. 是否没有明显崩溃
-
-二十二、后续扩展规则
-
-如果未来要扩展真实能力，只能在用户明确要求后进行。
-
-可能的后续扩展方向包括：
-1. 接入真实 AI 分析（详见「二十四、蓝心大模型 AI 接入规范」；正式接入属 **V0.5**；生产环境须通过自有后端代理，**AppKEY 不得放在客户端**）
-2. 接入 OCR
-3. 接入文档解析
-4. 接入本地数据库 Room
-5. 接入知识树长期存储
-6. 接入 vivo 端侧能力
-7. 接入复习提醒
-
-但这些都不属于当前阶段。
-当前阶段只做可演示 Android 原生 APP Demo。
-
-二十三、Cursor 工作要求
-
-你每次开始开发前，必须先做以下动作：
-
-1. 读取 PLAN.md
-2. 对照当前用户要求，判断是否属于 PLAN.md 范围
-3. 如果属于范围，直接实现
-4. 如果不属于范围，先提醒用户该需求超出当前 PLAN，等待确认
-5. 修改代码后，说明修改了哪些文件
-6. 不要输出大量无关解释
-7. 不要把项目改成其他技术栈
-8. 不要自行改变产品方向
-
-二十四、蓝心大模型 AI 接入规范
-
-零、官方文档与实现依据
-
-1. 官方文档入口：https://aigc.vivo.com.cn/#/document/index?id=1746（单页应用；若 vivo 调整入口或文档编号，以 vivo AIGC 平台当前展示为准）。
-2. **具体** HTTP(S) 地址、Path、鉴权方式（如 Header 名、签名算法、时间戳、Body 字段名）、以及平台返回的**原始**响应结构，**必须以该文档（及后续版本）为准**；本 PLAN **不**写入、**不**臆测、**不**维护具体 URL 或签名字段，以免与官方变更不一致。
-3. 实施 **V0.5** 的 `VivoLanxinAiRepository` 前，须在可正常访问文档的环境下**逐条对照**后再编写网络层与解析逻辑。
-4. **架构原则**：生产环境 Android 客户端只调用**自有后端**；由后端持有 AppID 与 AppKEY 调用 vivo 蓝心大模型；客户端日志、崩溃上报与接口报错信息中**不得**出现 AppKEY。
-5. 下列示意图仅表达职责边界，**不代表** vivo 官方拓扑或接口形态：
-
-```mermaid
-flowchart LR
-  subgraph app [AndroidApp]
-    VM[ViewModel]
-    Repo[AiLearningRepository]
-  end
-  subgraph server [推荐生产]
-    API[自有后端]
-  end
-  subgraph vivo [vivo蓝心]
-    LLM[大模型服务]
-  end
-  VM --> Repo
-  Repo -->|"V0.5生产"| API
-  API -->|"AppID与AppKEY仅服务端"| LLM
+```kotlin
+interface AiLearningRepository {
+    suspend fun analyzeLearningContent(text: String, sourceType: ImportSource): Result<LearningAnalysisResult>
+    suspend fun askNodeQuestion(nodeContext: NodeQuestionContext, question: String): Result<String>
+    suspend fun generateStepHints(nodeContext: NodeQuestionContext): Result<List<String>>
+    suspend fun evaluateFeynmanAnswer(request: FeynmanEvaluationRequest): Result<FeynmanEvaluationResult>
+}
 ```
 
-==============================
-蓝心大模型 AI 接入规范
-==============================
+### 12.3 数据模型
 
-一、AI 接入目标
+见 `AiLearningModels.kt`：`LearningAnalysisResult`、`NodeQuestionContext`、`FeynmanEvaluationRequest`、`FeynmanEvaluationResult`。
 
-蓝心知径后续需要接入 vivo 蓝心大模型能力，用于实现：
+### 12.4 蓝心输出与 Prompt 原则
 
-1. 学习内容分析
-2. 考点识别
-3. 可能卡点判断
-4. 知识点提取
-5. 知识关系生成
-6. 节点追问
-7. 分步提示
-8. 费曼复述评分
-9. 掌握度更新建议
-10. 复习任务生成
+- 模型输出须为**严格 JSON**（字段名固定），禁止散文/Markdown 表格。  
+- 学习分析 Prompt：识别内容类型、考点、关联点、卡点、学习路径、节点与关系（不直接给完整答案）。  
+- 节点追问：围绕当前节点与掌握度，非泛聊天。  
+- 分步提示：3–5 条，由浅入深，不一次性给完整答案。  
+- 费曼评分：返回 score、level、strengths、weaknesses、suggestions、masteryBefore/After、nextTasks。  
 
-注意：
-AI 不能只是普通聊天。
-AI 输出必须服务于「知识树学习助手」的产品主线。
+详细 Prompt 条文保留在代码库 `VivoLanxinAiRepository` 注释与历史 PLAN 备份逻辑中；实现 V0.5 时以官方文档 + 后端为准。
 
-二、当前阶段执行规则
+### 12.5 文档与 PDF 策略
 
-当前 V0.1 阶段仍然使用 MockAiLearningRepository。
+- **图片文字**：V0.4 起使用设备端 **ML Kit 中文识别**（离线模型由 Play 服务分发）。  
+- **PDF**：不在客户端强依赖本地 PDF 库做全文抽取；**V0.5 接入真实 AI 或后端**后，将 PDF（含扫描件）以文件或文本片段交给模型解析；V0.4 阶段导入 PDF 时展示说明并允许用户粘贴或导出 Word 替代。  
 
-不要现在直接把真实蓝心大模型接口接进页面。
-不要把 AppKEY 写进 Android 项目。
-不要在 UI 页面里直接写 HTTP 请求。
-不要把 AI 调用逻辑写进 Composable 页面。
+### 12.6 AI 接入阶段
 
-当前阶段只做：
-1. 保留 Mock AI 流程
-2. 创建 AI 接口抽象
-3. 预留 VivoLanxinAiRepository 文件
-4. 预留后续接入位置
-5. 在 PLAN.md 中明确真实接入属于 V0.5 阶段
+| 阶段 | AI 行为 |
+|------|---------|
+| V0.1 | 仅 Mock |
+| V0.2 | Room 存学习与复述结构；AI 仍 Mock |
+| V0.3 | 真实导入；AI 可 Mock（可基于文本摘要） |
+| V0.4 | OCR/抽取后传入分析链；AI 可 Mock 或 Debug |
+| V0.5+ | 正式蓝心或后端代理 |
 
-三、密钥安全要求
+### 12.7 错误处理（V0.5 起）
 
-AppID 可以作为普通配置处理，但 AppKEY 必须按密钥处理。
+网络失败、鉴权失败、限流、空响应、JSON 解析失败、超时 → UI 展示加载中 / 失败 / 重试（可选 Mock 降级）。
 
-禁止：
+### 12.8 自有后端 JSON 契约（0.1.7 起，相对 `AI_BACKEND_BASE_URL`）
 
-1. 禁止把 AppKEY 写死在 Kotlin 代码里
-2. 禁止把 AppKEY 写进 build.gradle
-3. 禁止把 AppKEY 写进 AndroidManifest.xml
-4. 禁止把 AppKEY 写进 PLAN.md
-5. 禁止把 AppKEY 写进 README
-6. 禁止把 AppKEY 提交到 GitHub
-7. 禁止在 Logcat 中打印 AppKEY
-8. 禁止在报错信息中显示 AppKEY
-
-生产环境推荐方案：
+**Base**：无尾部 `/`。以下路径均为追加。
 
-Android APP
-↓
-自己的后端接口
-↓
-后端保存 AppID / AppKEY
-↓
-后端调用 vivo 蓝心大模型
-↓
-后端返回结构化结果给 Android APP
-
-原因：
-Android APK 可以被反编译，如果把 AppKEY 放在客户端，密钥有泄露风险。
+| 能力 | 方法 | 路径 | 请求 JSON | 响应 JSON |
+|------|------|------|-----------|-----------|
+| 学习分析 | POST | `/api/lanxin/v1/analyze` | `text`（string）、`importSource`（string，与 `ImportSource.name` 一致） | 见下「分析结果」 |
+| 节点追问 | POST | `/api/lanxin/v1/node-ask` | `nodeContext`（对象，字段与 `NodeQuestionContext` 一致；`relatedNodes` 为 `{id,label,progress,type}` 数组）、`question`（string） | `answer`（string） |
+| 分步提示 | POST | `/api/lanxin/v1/step-hints` | 同 `nodeContext` 对象（与追问一致） | `hints`（string 数组） |
+| 费曼评分 | POST | `/api/lanxin/v1/feynman-evaluate` | `nodeId`、`nodeTitle`、`question`、`userAnswer`、`masteryBefore` | `score`、`level`、`strengths`、`weaknesses`、`suggestions`、`masteryBefore`、`masteryAfter`、`nextTasks`（数组字段均为 JSON array） |
 
-四、开发阶段临时方案
-
-如果用户后续明确要求在 Android 端临时直连蓝心大模型进行测试，只能作为 Debug 测试方案。
-
-Debug 测试时：
-
-1. 把 AppID 和 AppKEY 放在 local.properties
-2. local.properties 必须加入 .gitignore
-3. 通过 Gradle BuildConfig 读取
-4. 只能 Debug 使用
-5. Release 版本不允许直连携带 AppKEY
-6. 不允许打印 AppKEY
-7. 不允许把 local.properties 提交到仓库
-
-示例原则：
-
-local.properties 中可以放：
-VIVO_APP_ID=用户自己的 AppID
-VIVO_APP_KEY=用户自己的 AppKEY
+**分析结果**（与 `LearningAnalysisResult` 字段一致）：`contentType`、`coreTopic`、`relatedKnowledgePoints`（array of string）、`possibleWeakness`、`suggestedPath`（array of string）、`nodes`（`id,label,progress,type`）、`relations`（`from,relation,to`）。
 
-但不要在任何公开文件中写真实值。
-
-五、AI Repository 设计
-
-必须创建统一 AI 接口：
-
-interface AiLearningRepository {
-
-    suspend fun analyzeLearningContent(
-        text: String,
-        sourceType: ImportSource
-    ): Result<LearningAnalysisResult>
-
-    suspend fun askNodeQuestion(
-        nodeContext: NodeQuestionContext,
-        question: String
-    ): Result<String>
-
-    suspend fun generateStepHints(
-        nodeContext: NodeQuestionContext
-    ): Result<List<String>>
-
-    suspend fun evaluateFeynmanAnswer(
-        request: FeynmanEvaluationRequest
-    ): Result<FeynmanEvaluationResult>
-}
-
-必须保留两个实现：
-
-1. MockAiLearningRepository
-当前 V0.1 使用，返回固定 mock 数据。
-
-2. VivoLanxinAiRepository
-V0.5 接入真实蓝心大模型时使用。
-
-注意：
-UI 页面只能依赖 ViewModel。
-ViewModel 只能依赖 AiLearningRepository。
-不要让 UI 直接依赖 VivoLanxinAiRepository。
-
-六、AI 数据模型设计
-
-LearningAnalysisResult 至少包含：
-
-data class LearningAnalysisResult(
-    val contentType: String,
-    val coreTopic: String,
-    val relatedKnowledgePoints: List<String>,
-    val possibleWeakness: String,
-    val suggestedPath: List<String>,
-    val nodes: List<KnowledgeNode>,
-    val relations: List<KnowledgeRelation>
-)
-
-NodeQuestionContext 至少包含：
-
-data class NodeQuestionContext(
-    val nodeId: String,
-    val nodeTitle: String,
-    val nodeDescription: String,
-    val mastery: Int,
-    val relatedNodes: List<KnowledgeNode>,
-    val recentMistakes: List<String>,
-    val recentReviewFeedback: List<String>
-)
-
-FeynmanEvaluationRequest 至少包含：
-
-data class FeynmanEvaluationRequest(
-    val nodeId: String,
-    val nodeTitle: String,
-    val question: String,
-    val userAnswer: String,
-    val masteryBefore: Int
-)
-
-FeynmanEvaluationResult 至少包含：
-
-data class FeynmanEvaluationResult(
-    val score: Int,
-    val level: String,
-    val strengths: List<String>,
-    val weaknesses: List<String>,
-    val suggestions: List<String>,
-    val masteryBefore: Int,
-    val masteryAfter: Int,
-    val nextTasks: List<String>
-)
-
-七、蓝心大模型输出要求
-
-为了方便 App 解析，调用蓝心大模型时，提示词必须要求模型返回严格 JSON。
-
-不要让模型返回大段散文。
-不要让模型返回 Markdown 表格。
-不要让模型随意改变字段名。
-
-学习内容分析的 AI 输出必须类似：
-
-{
-  "contentType": "数学错题",
-  "coreTopic": "导数与函数单调性",
-  "relatedKnowledgePoints": ["导数计算", "导数符号", "单调区间", "极值判断", "参数讨论"],
-  "possibleWeakness": "你可能不是不会求导，而是不熟悉导数符号变化和函数增减性的关系。",
-  "suggestedPath": ["导数定义", "几何意义", "导数符号", "单调性", "极值判断"],
-  "nodes": [
-    {
-      "id": "symbol",
-      "label": "导数符号",
-      "progress": 45,
-      "type": "medium"
-    }
-  ],
-  "relations": [
-    {
-      "from": "导数符号",
-      "relation": "影响",
-      "to": "单调区间"
-    }
-  ]
-}
-
-八、学习内容分析 Prompt 规范
-
-VivoLanxinAiRepository 中需要准备一个学习分析 Prompt。
-
-Prompt 目标：
-把用户导入的题目、教材、笔记、文档或截图 OCR 文本，分析成结构化学习结果。
-
-Prompt 要求：
-
-你是「蓝心知径」的 AI 学习分析引擎。
-你的任务不是直接给答案，而是帮助学习者判断：
-1. 这是什么学习内容
-2. 核心考点是什么
-3. 关联知识点有哪些
-4. 用户可能卡在哪里
-5. 应该先补哪条知识链
-6. 这次内容应该沉淀成哪些知识节点
-7. 节点之间有什么关系
-
-请严格返回 JSON，不要输出 Markdown，不要输出解释文字。
-
-九、节点追问 Prompt 规范
-
-节点追问不能变成普通聊天。
-
-Prompt 要求：
-
-你是「蓝心知径」的节点学习教练。
-当前用户正在学习某个知识节点。
-请根据：
-1. 当前节点
-2. 相邻节点
-3. 用户掌握度
-4. 用户问题
-5. 最近错题或复述反馈
-
-给出适合学习者理解的回答。
-
-回答要求：
-1. 不要只给最终答案
-2. 优先解释用户卡点
-3. 可以给例子
-4. 可以引导用户自己思考
-5. 回答要围绕当前知识节点
-6. 不要跑题
-
-十、分步提示 Prompt 规范
-
-分步提示用于引导用户，而不是一次性给完整答案。
-
-Prompt 要求：
-
-请围绕当前知识节点生成 3 到 5 条分步提示。
-提示必须从简单到深入。
-每条提示要短。
-不要直接给最终完整答案。
-返回 JSON 数组。
-
-十一、费曼复述评分 Prompt 规范
-
-费曼复述评分用于判断用户是否真正理解。
-
-Prompt 要求：
-
-你是「蓝心知径」的费曼复述评分教练。
-请根据用户对知识点的复述内容进行评分。
-
-你需要判断：
-1. 用户是否说出了核心概念
-2. 用户是否能用自己的话解释
-3. 用户是否遗漏关键前置知识
-4. 用户是否存在理解误区
-5. 用户下一步应该补什么
-
-请返回严格 JSON：
-
-{
-  "score": 78,
-  "level": "基本理解",
-  "strengths": ["说出了导数和函数变化趋势有关"],
-  "weaknesses": ["缺少切线斜率解释", "没有说明区间内导数符号是否稳定"],
-  "suggestions": ["补充导数几何意义", "完成 2 道同类题"],
-  "masteryBefore": 42,
-  "masteryAfter": 68,
-  "nextTasks": ["完成 2 道同类题", "复习导数符号与单调区间"]
-}
-
-十二、错误处理要求
-
-AI 调用必须处理：
-
-1. 网络失败
-2. 鉴权失败
-3. 接口限流
-4. 响应为空
-5. JSON 解析失败
-6. 模型返回格式不符合要求
-7. 请求超时
-
-UI 层必须显示：
-
-1. 加载中
-2. 分析失败
-3. 重试按钮
-4. 使用 mock 示例继续体验，后续可选
-
-十三、AI 接入阶段安排
-
-V0.1：
-使用 MockAiLearningRepository。
-只预留接口，不接真实 AI。
-
-V0.2：
-Room 保存 AI 分析结果的数据结构。
-
-V0.3：
-真实导入内容，但 AI 仍可 mock。
-
-V0.4：
-OCR 和文本抽取后，将真实文本传入分析流程，但 AI 仍可 mock 或 Debug 接入。
-
-V0.5：
-正式接入 vivo 蓝心大模型。
-实现 VivoLanxinAiRepository。
-AnalysisScreen 使用真实 AI 结果。
-NodeFocusScreen 使用真实 AI 回复。
-ReviewScreen 使用真实 AI 评分。
-
-十四、Cursor 当前任务
-
-当前不要直接接入真实蓝心大模型。
-
-现在只做：
-
-1. 阅读 vivo 官方文档，了解接口调用方式
-2. 更新 PLAN.md 的 AI 接入规范
-3. 创建 AiLearningRepository 接口
-4. 创建 MockAiLearningRepository
-5. 创建 VivoLanxinAiRepository 空实现或 TODO 实现
-6. 创建 AI 相关数据模型
-7. 确保当前 V0.1 仍然使用 MockAiLearningRepository
-8. 不要写入真实 AppKEY
-9. 不要打印 AppKEY
-10. 不要把密钥提交到仓库
-
-十五、后续真实接入时再做
-
-当用户明确说「开始接入蓝心大模型」时，再执行：
-
-1. 按 vivo 文档配置请求地址
-2. 按 vivo 文档实现鉴权
-3. 按 vivo 文档组装请求体
-4. 按 vivo 文档解析响应体
-5. 接入 Loading / Error / Retry 状态
-6. 使用严格 JSON Prompt
-7. 测试学习分析、节点追问、费曼评分三类调用
-
-最终目标：
-做出一个稳定、简洁、可演示、符合原型图风格的 Android 原生 APP Demo。
+鉴权、蓝心 AppKEY、PDF 上传解析均在**服务端**实现；客户端仅携带业务 JSON（及后续你可扩展的 `Authorization` header，不由本仓库写入密钥）。
+
+**local.properties 示例（勿提交密钥）**：
+
+```properties
+ai.backend.baseUrl=http://10.0.2.2:8080
+# 可选，默认 true：远端失败时使用 MockAiLearningRepository
+ai.backend.fallbackToMock=true
+```
+
+---
+
+## 13. 隐私与密钥安全规范
+
+1. **禁止**将 AppKEY 写入：Kotlin 源码、`build.gradle`、`AndroidManifest.xml`、PLAN、README、Git 仓库。  
+2. **禁止** Logcat / 报错信息打印 AppKEY。  
+3. `local.properties` 必须在 `.gitignore`（已配置）。  
+4. Debug 临时直连（若用户明确要求）：仅 `local.properties` + BuildConfig，仅 Debug，Release 禁止携带 AppKEY。  
+5. 生产：Android → 自有后端 → vivo API（AppID/AppKEY 仅服务端）。  
+
+---
+
+## 14. UI 参考图规范
+
+- 原型资源目录：`picture/`（当前含 `tubiao.png`；完整页面参考图按产品补充）。  
+- 视觉：白底、圆角卡片、蓝色主色、浅绿提示卡、底部四 Tab。  
+- 页面与跳转（固定）：
+
+```
+启动 → HomeScreen
+Home → Analysis（拍错题/截图识别/导入成功后）
+Home → KnowledgeTree（导数与单调性）
+Analysis → KnowledgeTree / NodeFocus
+KnowledgeTree → NodeFocus
+NodeFocus → Review
+```
+
+- 各页必备文案与 Mock 主线以「导数与单调性」为演示核心；实现时以现有 `ui/screens/` 与 `ui/components/` 为准，不擅自改版式。
+
+---
+
+## 15. 当前开发任务追踪（0.1.7）
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 1 | PLAN：§4.2 / §6 / §12.8 / 路线图 0.1.7 | 已完成 |
+| 2 | `buildConfig` + `local.properties` 注入 `AI_BACKEND_*` | 已完成 |
+| 3 | `BackendProxyAiLearningRepository` + JSON 解析 | 已完成 |
+| 4 | `FallbackAiLearningRepository` + `AiRepositoryFactory` | 已完成 |
+| 5 | `Application` / `LearningViewModelFactory` 注入 AI | 已完成 |
+| 6 | `INTERNET` + debug 明文流量 | 已完成 |
+| 7 | `ProfileScreen` AI 通道说明 | 已完成 |
+| 8 | `versionName=0.1.7`，`versionCode=6`，`assembleDebug` | 已完成 |
+
+---
+
+## 15-legacy-014tasks. 0.1.4 开发任务（已完成）
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 1 | 重写 PLAN 为长期结构（本章 1–15） | 已完成 |
+| 2 | 记录 0.1.2 审计与 0.1.3 范围 | 已完成 |
+| 3 | 审查 Room / Repository / ViewModel 分层 | 已完成（UI 无直连 DAO；ViewModel 经 Repository） |
+| 4 | 移除 `Application.runBlocking`，改 ViewModel 异步 `initializeIfNeeded()` | 已完成 |
+| 5 | `versionName=0.1.3`，`versionCode=2` | 已完成 |
+| 6 | `assembleDebug` 自测 | 已通过 |
+| 7 | 确认无 AppKEY / 无真实 AI 网络 | 已确认 |
+
+**V0.2 Room 结构核对（代码审查结论）**：
+
+| 表 | Entity | DAO | Repository 使用 |
+|----|--------|-----|-----------------|
+| learning_content | ✓ | LearningContentDao | learningItems, seed, import |
+| knowledge_node | ✓ | KnowledgeNodeDao | 知识树、掌握度 |
+| knowledge_relation | ✓ | KnowledgeRelationDao | 关系与边 |
+| chat_message | ✓ | ChatMessageDao | 节点对话 |
+| review_record | ✓ | ReviewRecordDao | 费曼复述 |
+| mastery_record | ✓ | MasteryRecordDao | 掌握度变更记录 |
+| import_record | ✓ | ImportRecordDao | V0.3 雏形导入 |
+
+---
+
+## 开发记录
+
+### 2026-05-15 · 0.1.3
+
+**计划**：重写 PLAN；V0.2 验收收尾；修复 `runBlocking`；版本号 0.1.3。
+
+**已完成**：
+
+1. PLAN 重写为 15 章长期结构，含 0.1.2 审计、V0.1–V0.9 路线图、0.1.3 范围与强制流程。  
+2. 移除 `LanxinZhijingApplication` 中 `runBlocking`；在 `LearningViewModel.init` 中异步调用 `initializeIfNeeded()`（幂等）。  
+3. `versionName = "0.1.3"`，`versionCode = 2`。  
+4. 代码审查：7 张 Room 表齐全；`LearningRepository` 统一封装；UI 无直连 DAO；默认 `MockAiLearningRepository`；`VivoLanxinAiRepository` 仅占位无网络。  
+5. `assembleDebug` 构建成功。
+
+**修改文件**：
+
+- `PLAN.md`  
+- `app/build.gradle.kts`  
+- `app/src/main/java/com/lanxin/zhijing/LanxinZhijingApplication.kt`  
+- `app/src/main/java/com/lanxin/zhijing/viewmodel/LearningViewModel.kt`  
+
+**影响**：启动不再阻塞主线程；种子数据在 ViewModel 创建后后台写入，首页 `learningItems` 为空时仍显示 `CircularProgressIndicator`，写入后 Flow 自动刷新。
+
+**V0.2 持久化验收（代码路径 + 构建）**：
+
+| 项 | 结论 |
+|----|------|
+| 最近学习 | `LearningContentDao` → `learningItems` Flow → HomeScreen |
+| 知识树节点/关系 | `KnowledgeNodeDao` / `KnowledgeRelationDao` → KnowledgeTreeScreen |
+| 节点对话 | `ChatMessageDao.addChatMessage` → `getChatMessages` Flow |
+| 费曼复述 | `ReviewRecordDao` + `saveFeynmanReview`；复习页 `ensureMockFeynmanPersisted` |
+| 掌握度同步 | `saveFeynmanReview` 更新 `knowledge_node` + 导数项 `learning_content` meta |
+| 杀进程重启 | **须在真机/模拟器人工验证**（Room 文件 `lanxin_zhijing.db` 持久化设计已就绪） |
+
+**自测**：Gradle `assembleDebug` 通过；无 AppKEY；无 HTTP 客户端依赖；`local.properties` 在 `.gitignore`。
+
+**下一步**：真机完成第十一节杀进程清单后，可更新 PLAN 启动 **正式 V0.3**（须先写 PLAN：系统分享、划词、拍照、ImportPreviewScreen 等）。
+
+---
+
+## 本次开发任务：添加 APP 图标
+
+**任务目标**：使用 `picture/tubiao.png` 作为蓝心知径 Android APP 的启动图标。
+
+**本次允许修改**：
+
+1. `PLAN.md`
+2. `app/src/main/AndroidManifest.xml`
+3. `app/src/main/res/drawable-nodpi/`（新增 `tubiao.png`）
+4. `app/src/main/res/mipmap-anydpi-v26/`（仅当需要时；本次采用做法 A，不修改 adaptive icon）
+
+**本次不允许修改**：
+
+1. 不修改页面功能、AI、Room、Repository、ViewModel 业务逻辑  
+2. 不新增页面；不接真实 AI / OCR；不做登录注册  
+3. **不改动** `picture/tubiao.png` 原图  
+
+**实施方案（做法 A）**：
+
+- 复制 `picture/tubiao.png` → `res/drawable-nodpi/tubiao.png`  
+- `AndroidManifest.xml`：`android:icon="@drawable/tubiao"`，`android:roundIcon="@drawable/tubiao"`  
+- 保留现有 `mipmap-anydpi/ic_launcher*.xml`，不删除  
+
+**验收标准**：
+
+1. Gradle / `assembleDebug` 通过  
+2. 桌面与多任务页显示 `tubiao` 图标  
+3. Manifest 正确引用 `@drawable/tubiao`  
+4. 不影响现有页面与功能  
+5. 资源名为小写英文，无中文资源名  
+
+### 2026-05-15 · 添加 APP 图标
+
+**状态**：已完成  
+
+**已完成**：
+
+1. 复制 `picture/tubiao.png` → `app/src/main/res/drawable-nodpi/tubiao.png`（未修改原图）。  
+2. `AndroidManifest.xml`：`android:icon="@drawable/tubiao"`，`android:roundIcon="@drawable/tubiao"`。  
+3. 保留现有 `mipmap-anydpi/ic_launcher*.xml`，未删除。  
+4. `assembleDebug` 构建成功。  
+
+**修改文件**：
+
+- `PLAN.md`  
+- `app/src/main/AndroidManifest.xml`  
+- `app/src/main/res/drawable-nodpi/tubiao.png`（新增）  
+
+**影响**：仅更换启动图标资源引用；未改动页面、AI、Room、Repository、ViewModel。  
+
+**自测**：Gradle 编译通过；桌面/多任务图标显示须在真机或模拟器安装后人工确认。  
+
+---
+
+### 2026-05-15 · 0.1.4 正式 V0.3（第一批）
+
+**状态**：已完成  
+
+**已完成**：
+
+1. `PendingImport` 暂存 → `ImportPreviewScreen` 编辑 → 确认落库 → `AnalysisScreen`  
+2. CameraX `CameraCaptureScreen`；相册 `image/*`；粘贴/文件经预览页  
+3. `ACTION_SEND`（text/image/*）与 `ACTION_PROCESS_TEXT`；`MainActivity` + `ImportIntentParser`  
+4. 图片导入占位文案（V0.4 OCR 提示）  
+5. `versionName = "0.1.4"`，`versionCode = 3`；`assembleDebug` 通过  
+
+**修改/新增文件**：
+
+- `PLAN.md`  
+- `gradle/libs.versions.toml`、`app/build.gradle.kts`  
+- `AndroidManifest.xml`、`res/xml/file_paths.xml`  
+- `MainActivity.kt`、`navigation/Routes.kt`、`navigation/AppNavGraph.kt`  
+- `viewmodel/LearningViewModel.kt`  
+- `data/importutil/PendingImport.kt`、`ImportIntentParser.kt`、`TextImportHelper.kt`  
+- `ui/screens/ImportPreviewScreen.kt`、`CameraCaptureScreen.kt`、`HomeScreen.kt`  
+
+**影响**：导入链路统一经预览页；六主页面与底部导航不变；仍用 Mock AI；无 OCR/真实蓝心。  
+
+**自测**：编译通过；分享/划词/拍照/选图须在真机验证。  
+
+**下一步**：**V0.5** 接入真实 AI / 后端；PDF 由模型解析；`AiLearningRepository` 真实实现。  
+
+---
+
+### 2026-05-15 · 0.1.7 V0.5 后端代理骨架
+
+**状态**：已完成  
+
+**已完成**：
+
+1. `local.properties` → `BuildConfig.AI_BACKEND_BASE_URL`、`AI_BACKEND_FALLBACK_TO_MOCK`（无密钥入仓）。  
+2. `BackendProxyAiLearningRepository`（HttpURLConnection + §12.8 路径）；`AiBackendWireFormat` 严格 JSON；`FallbackAiLearningRepository`；`AiRepositoryFactory`。  
+3. `LanxinZhijingApplication.aiLearningRepository` + `LearningViewModelFactory` 注入。  
+4. `INTERNET`；`src/debug/AndroidManifest.xml` 明文 HTTP 便于 `10.0.2.2` 联调。  
+5. `ProfileScreen` 展示 AI 通道摘要。  
+6. `versionName = "0.1.7"`，`versionCode = 6`。  
+
+**修改/新增文件**：`PLAN.md`、`app/build.gradle.kts`、`AndroidManifest.xml`、`app/src/debug/AndroidManifest.xml`、`LanxinZhijingApplication.kt`、`LearningViewModel.kt`、`ProfileScreen.kt`、`AiBackendWireFormat.kt`、`BackendProxyAiLearningRepository.kt`、`FallbackAiLearningRepository.kt`、`AiRepositoryFactory.kt`、`VivoLanxinAiRepository.kt`（注释）  
+
+**自测**：`:app:compileDebugKotlin` 已通过；完整 `assembleDebug` 在 CI 环境因 `compileDebugJavaWithJavac` / Gradle Worker `ClassNotFoundException: GradleWorkerMain` 未跑通（Gradle/JVM 环境问题）；请在本地 Android Studio 或修复 Gradle Worker 后重跑 `assembleDebug`。  
+
+**下一步**：实现服务端转发蓝心；**PDF** 上传/URL 解析接口；客户端可选 `Authorization`（仍不入仓密钥）。  
+
+---
+
+### 2026-05-15 · 0.1.6 图片 OCR 与 PDF 策略调整
+
+**状态**：已完成  
+
+**已完成**：
+
+1. 移除 **pdfbox-android**；PDF 导入展示「待 V0.5 AI 解析」说明，用户可粘贴或导出 Word/文本。  
+2. 新增 **ML Kit 中文文字识别**（`ImageOcrHelper`）：相册、拍照、分享图片、文件选择器选图经 OCR 填入预览；失败保留占位。  
+3. `ImportIntentParser.parse` 改为 `suspend`，分享图片异步 OCR。  
+4. `versionName = "0.1.6"`，`versionCode = 5`；`assembleDebug` 通过。  
+
+**修改文件**：`PLAN.md`、`libs.versions.toml`、`app/build.gradle.kts`、`DocumentImportHelper.kt`、`ImageOcrHelper.kt`（新）、`ImportIntentParser.kt`、`LearningViewModel.kt`、`TextImportHelper.kt`  
+
+---
+
+### 2026-05-15 · 0.1.5 多格式文档导入
+
+**状态**：已完成  
+
+**已完成**：
+
+1. 新增 `DocumentImportHelper` 统一按扩展名/MIME 抽取正文。  
+2. 支持：txt/md/csv/json/xml/html 等纯文本（UTF-8/GBK）、~~pdf（pdfbox）~~、docx、epub、odt、rtf（**0.1.6 起 pdf 改 AI 占位、移除 pdfbox**）。  
+3. **0.1.5 时**图片为占位；**0.1.6** 起相册/拍照/分享图走 ML Kit OCR。旧版 .doc 提示另存为 docx/pdf；失败格式可在预览页手改。  
+4. 单文件上限 10MB；`versionName = "0.1.5"`，`versionCode = 4`；`assembleDebug` 通过。  
+
+**修改文件**：`PLAN.md`、`libs.versions.toml`、`app/build.gradle.kts`、`DocumentImportHelper.kt`、`TextImportHelper.kt`、`ImportIntentParser.kt`、`LearningViewModel.kt`、`HomeScreen.kt`  
+
+---
+
+*本文档为蓝心知径唯一权威开发范围说明。与代码冲突时，以用户最新指令 + 更新后的 PLAN 为准。*

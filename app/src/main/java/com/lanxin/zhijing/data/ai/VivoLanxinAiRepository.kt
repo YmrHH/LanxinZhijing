@@ -1,7 +1,9 @@
 package com.lanxin.zhijing.data.ai
 
 /**
- * V0.5：按 vivo AIGC 官方文档实现真实调用；当前仅占位，不发起网络、不包含任何密钥。
+ * V0.5：直连 vivo 客户端 SDK/HTTP **不推荐**（AppKEY 须在服务端）。
+ * 客户端请使用 [BackendProxyAiLearningRepository] + [AiRepositoryFactory]（`local.properties` 配置 `ai.backend.baseUrl`），
+ * 由自有后端按官方文档调用蓝心。
  *
  * 文档入口：https://aigc.vivo.com.cn/#/document/index?id=1746
  */
