@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -17,13 +17,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.AppProgressBar
 import com.lanxin.zhijing.ui.components.ChatBubble
@@ -43,7 +43,11 @@ fun NodeFocusScreen(
 ) {
     val messages by viewModel.chatMessages.collectAsStateWithLifecycle()
     val hintsExpanded by viewModel.stepHintsExpanded.collectAsStateWithLifecycle()
+    val focusNode by viewModel.focusNodeDisplay.collectAsStateWithLifecycle()
     var input by remember { mutableStateOf("") }
+
+    val title = focusNode?.label ?: "导数与单调性"
+    val mastery = focusNode?.progress ?: 42
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 20.dp, vertical = 16.dp),
@@ -52,24 +56,24 @@ fun NodeFocusScreen(
         item {
             PageHeader(
                 title = "节点聚焦",
-                subtitle = "导数与单调性 · 掌握度 42%"
+                subtitle = "$title · 掌握度 $mastery%"
             )
         }
         item {
             AppCard {
                 Text(
-                    text = "当前节点：导数与单调性",
+                    text = "当前节点：$title",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = AppColors.textPrimary
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "掌握度：42%",
+                    text = "掌握度：$mastery%",
                     style = MaterialTheme.typography.bodyLarge,
                     color = AppColors.textSecondary
                 )
                 Spacer(Modifier.height(10.dp))
-                AppProgressBar(progress = 42)
+                AppProgressBar(progress = mastery)
             }
         }
         item {
@@ -82,7 +86,7 @@ fun NodeFocusScreen(
                 }
             }
         }
-        itemsIndexed(messages, key = { index, _ -> index }) { _, msg ->
+        items(messages, key = { it.id }) { msg ->
             ChatBubble(message = msg)
         }
         item {

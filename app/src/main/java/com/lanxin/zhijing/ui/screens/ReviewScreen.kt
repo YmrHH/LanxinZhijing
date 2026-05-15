@@ -13,19 +13,44 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.AppProgressBar
 import com.lanxin.zhijing.ui.components.PageHeader
 import com.lanxin.zhijing.ui.theme.AppColors
+import com.lanxin.zhijing.viewmodel.LearningViewModel
 
 @Composable
 fun ReviewScreen(
+    viewModel: LearningViewModel,
     onNextPractice: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val latest by viewModel.latestFeynmanReview.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.ensureMockFeynmanPersisted()
+    }
+
+    val question = "请你不用公式，讲给同学听：为什么导数可以判断函数的增减？"
+    val userAnswer =
+        "因为导数表示函数变化的方向。导数大于 0 时，函数值会增加；导数小于 0 时，函数值会减少。"
+    val score = latest?.score ?: 78
+    val level = latest?.level ?: "基本理解"
+    val strengthsText = latest?.strengths ?: "说出了导数和函数变化趋势有关。"
+    val weaknessLines = latest?.weaknesses?.lines()?.filter { it.isNotBlank() } ?: listOf(
+        "可以补充「切线斜率」的解释",
+        "判断单调性时，要看区间内导数符号是否稳定",
+        "还没有说明导数符号变化与极值点的关系"
+    )
+    val masteryAfter = latest?.masteryAfter ?: 68
+    val masteryBefore = latest?.masteryBefore ?: 42
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -44,7 +69,7 @@ fun ReviewScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "请你不用公式，讲给同学听：为什么导数可以判断函数的增减？",
+                text = latest?.question ?: question,
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )
@@ -57,7 +82,7 @@ fun ReviewScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "因为导数表示函数变化的方向。导数大于 0 时，函数值会增加；导数小于 0 时，函数值会减少。",
+                text = latest?.userAnswer ?: userAnswer,
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )
@@ -70,13 +95,13 @@ fun ReviewScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "得分：78 / 100",
+                text = "得分：$score / 100",
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.primary
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "等级标签：基本理解",
+                text = "等级标签：$level",
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppColors.textSecondary
             )
@@ -87,7 +112,7 @@ fun ReviewScreen(
                 color = AppColors.textSecondary
             )
             Text(
-                text = "说出了导数和函数变化趋势有关。",
+                text = strengthsText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppColors.textPrimary
             )
@@ -97,21 +122,13 @@ fun ReviewScreen(
                 style = MaterialTheme.typography.labelLarge,
                 color = AppColors.textSecondary
             )
-            Text(
-                text = "1. 可以补充“切线斜率”的解释",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.textPrimary
-            )
-            Text(
-                text = "2. 判断单调性时，要看区间内导数符号是否稳定",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.textPrimary
-            )
-            Text(
-                text = "3. 还没有说明导数符号变化与极值点的关系",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.textPrimary
-            )
+            weaknessLines.forEachIndexed { index, line ->
+                Text(
+                    text = "${index + 1}. $line",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppColors.textPrimary
+                )
+            }
         }
         AppCard {
             Text(
@@ -127,12 +144,12 @@ fun ReviewScreen(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "变化：42% -> 68%",
+                text = "变化：$masteryBefore% -> $masteryAfter%",
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppColors.textSecondary
             )
             Spacer(Modifier.height(10.dp))
-            AppProgressBar(progress = 68, progressColor = AppColors.green)
+            AppProgressBar(progress = masteryAfter, progressColor = AppColors.green)
         }
         Button(
             onClick = onNextPractice,

@@ -1,5 +1,7 @@
 package com.lanxin.zhijing.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,26 +12,104 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.lanxin.zhijing.data.MockData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.AppProgressBar
 import com.lanxin.zhijing.ui.components.LearningItemCard
 import com.lanxin.zhijing.ui.components.PageHeader
 import com.lanxin.zhijing.ui.theme.AppColors
+import com.lanxin.zhijing.ui.util.showShortToast
+import com.lanxin.zhijing.viewmodel.LearningViewModel
 
 @Composable
 fun HomeScreen(
+    viewModel: LearningViewModel,
     onOpenAnalysis: () -> Unit,
     onOpenKnowledgeTree: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val learningItems by viewModel.learningItems.collectAsStateWithLifecycle()
+    val centerNode by viewModel.centerTreeNode.collectAsStateWithLifecycle()
+    val suggestionProgress = centerNode?.progress ?: 42
+    val context = LocalContext.current
+
+    var showPasteDialog by remember { mutableStateOf(false) }
+    var pasteTitle by remember { mutableStateOf("") }
+    var pasteBody by remember { mutableStateOf("") }
+
+    val pickFile = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        viewModel.importFromFile(context, uri) { ok ->
+            if (ok) onOpenAnalysis()
+            else context.showShortToast("无法读取文件（过大或非 UTF-8 文本）")
+        }
+    }
+
+    if (showPasteDialog) {
+        AlertDialog(
+            onDismissRequest = { showPasteDialog = false },
+            title = { Text("粘贴文档内容") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = pasteTitle,
+                        onValueChange = { pasteTitle = it },
+                        label = { Text("标题（可选）") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = pasteBody,
+                        onValueChange = { pasteBody = it },
+                        label = { Text("正文") },
+                        minLines = 5,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.importPastedText(pasteTitle, pasteBody) { ok ->
+                            if (ok) {
+                                showPasteDialog = false
+                                pasteBody = ""
+                                onOpenAnalysis()
+                            } else {
+                                context.showShortToast("请输入要导入的内容")
+                            }
+                        }
+                    }
+                ) {
+                    Text("导入并分析")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPasteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     LazyColumn(
         modifier = modifier.padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -66,13 +146,13 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "掌握度：42%",
+                        text = "掌握度：$suggestionProgress%",
                         style = MaterialTheme.typography.titleMedium,
                         color = AppColors.primary
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                AppProgressBar(progress = 42)
+                AppProgressBar(progress = suggestionProgress)
             }
         }
         item {
@@ -91,7 +171,7 @@ fun HomeScreen(
                         title = "导入教材/笔记",
                         subtitle = "生成知识树",
                         modifier = Modifier.weight(1f),
-                        onClick = null
+                        onClick = { pickFile.launch("*/*") }
                     )
                 }
                 Row(
@@ -102,7 +182,7 @@ fun HomeScreen(
                         title = "粘贴文档内容",
                         subtitle = "拆解概念",
                         modifier = Modifier.weight(1f),
-                        onClick = null
+                        onClick = { showPasteDialog = true }
                     )
                     HomeEntryCard(
                         title = "截图识别",
@@ -120,16 +200,22 @@ fun HomeScreen(
                 color = AppColors.textPrimary
             )
         }
-        items(MockData.learningItems, key = { it.id }) { item ->
-            val isDerivative = item.id == "derivative"
-            LearningItemCard(
-                item = item,
-                onClick = if (isDerivative) {
-                    { onOpenKnowledgeTree() }
-                } else {
-                    null
-                }
-            )
+        if (learningItems.isEmpty()) {
+            item {
+                CircularProgressIndicator(color = AppColors.primary)
+            }
+        } else {
+            items(learningItems, key = { it.id }) { item ->
+                val isDerivative = item.id == "derivative"
+                LearningItemCard(
+                    item = item,
+                    onClick = if (isDerivative) {
+                        { onOpenKnowledgeTree() }
+                    } else {
+                        null
+                    }
+                )
+            }
         }
     }
 }

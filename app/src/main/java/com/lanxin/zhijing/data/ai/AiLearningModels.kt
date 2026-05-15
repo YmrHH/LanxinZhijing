@@ -2,6 +2,7 @@ package com.lanxin.zhijing.data.ai
 
 import com.lanxin.zhijing.data.KnowledgeNode
 import com.lanxin.zhijing.data.KnowledgeRelation
+import com.lanxin.zhijing.data.MockData
 
 data class LearningAnalysisResult(
     val contentType: String,
@@ -41,3 +42,15 @@ data class FeynmanEvaluationResult(
     val masteryAfter: Int,
     val nextTasks: List<String>
 )
+
+/** 无导入或分析失败时的内置占位，与 Mock 默认主线一致 */
+fun builtInDefaultLearningAnalysis(): LearningAnalysisResult =
+    LearningAnalysisResult(
+        contentType = "数学错题",
+        coreTopic = "导数与函数单调性",
+        relatedKnowledgePoints = MockData.analysisTags,
+        possibleWeakness = "你可能不是不会求导，而是不熟悉「导数符号变化」和「函数增减性」的关系。",
+        suggestedPath = listOf("导数定义", "几何意义", "导数符号", "单调性", "极值判断"),
+        nodes = MockData.knowledgeNodes,
+        relations = MockData.relations
+    )

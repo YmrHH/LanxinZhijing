@@ -9,15 +9,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.PageHeader
 import com.lanxin.zhijing.ui.theme.AppColors
+import com.lanxin.zhijing.viewmodel.LearningViewModel
 
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+fun ProfileScreen(
+    viewModel: LearningViewModel,
+    modifier: Modifier = Modifier
+) {
+    val knowledgeCount by viewModel.profileKnowledgeCount.collectAsStateWithLifecycle()
+    val pending by viewModel.profileReviewPendingCount.collectAsStateWithLifecycle()
+
     Column(
         modifier = modifier.padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -34,13 +43,13 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "已沉淀知识点：26 个",
+                text = "已沉淀知识点：$knowledgeCount 个",
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "待复习节点：5 个",
+                text = "待复习节点：$pending 个",
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )

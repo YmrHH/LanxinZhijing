@@ -26,13 +26,19 @@ object MockData {
 
     val initialChatMessages: List<ChatMessage> = listOf(
         ChatMessage(
-            "AI",
-            "你现在卡在“导数符号如何影响函数走势”。建议先理解：f'(x)>0 表示函数在该区间内整体上升。"
+            id = "chat_seed_1",
+            role = "AI",
+            content = "你现在卡在“导数符号如何影响函数走势”。建议先理解：f'(x)>0 表示函数在该区间内整体上升。"
         ),
-        ChatMessage("USER", "为什么 f'(x)>0 时，函数就是递增的？"),
         ChatMessage(
-            "AI",
-            "可以把导数理解成函数图像在某一点的倾斜方向。当 f'(x)>0 时，切线斜率为正，图像向右上方延伸。"
+            id = "chat_seed_2",
+            role = "USER",
+            content = "为什么 f'(x)>0 时，函数就是递增的？"
+        ),
+        ChatMessage(
+            id = "chat_seed_3",
+            role = "AI",
+            content = "可以把导数理解成函数图像在某一点的倾斜方向。当 f'(x)>0 时，切线斜率为正，图像向右上方延伸。"
         )
     )
 
@@ -49,9 +55,9 @@ object MockData {
 
     val graphEdges: List<Pair<String, String>> = listOf(
         "function" to "definition",
-        "definition" to "center",
+        "definition" to "derivative",
         "symbol" to "monotonic",
         "monotonic" to "extreme",
-        "center" to "parameter"
+        "derivative" to "parameter"
     )
 }

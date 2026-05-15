@@ -6,26 +6,37 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.lanxin.zhijing.data.MockData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.KnowledgeGraph
 import com.lanxin.zhijing.ui.components.PageHeader
 import com.lanxin.zhijing.ui.theme.AppColors
+import com.lanxin.zhijing.viewmodel.LearningViewModel
 
 @Composable
 fun KnowledgeTreeScreen(
-    onOpenNodeFocus: () -> Unit,
+    viewModel: LearningViewModel,
+    onOpenNodeFocus: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val satellites by viewModel.treeSatelliteNodes.collectAsStateWithLifecycle()
+    val center by viewModel.centerTreeNode.collectAsStateWithLifecycle()
+    val edges by viewModel.knowledgeGraphEdges.collectAsStateWithLifecycle()
     val clickable = setOf("symbol", "monotonic")
+    val centerTitle = center?.label ?: "导数与单调性"
+    val centerProgress = center?.progress ?: 42
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -34,19 +45,26 @@ fun KnowledgeTreeScreen(
     ) {
         PageHeader(
             title = "我的知识树",
-            subtitle = "中心节点：导数与单调性 42%"
+            subtitle = "中心节点：$centerTitle $centerProgress%"
         )
-        KnowledgeGraph(
-            nodes = MockData.knowledgeNodes,
-            centerTitle = "导数与单调性",
-            centerProgress = 42,
-            onCenterClick = onOpenNodeFocus,
-            onSatelliteClick = { if (it.id in clickable) onOpenNodeFocus() },
-            clickableSatelliteIds = clickable,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(360.dp)
-        )
+        if (satellites.isEmpty() || edges.isEmpty()) {
+            CircularProgressIndicator(color = AppColors.primary)
+        } else {
+            KnowledgeGraph(
+                nodes = satellites,
+                graphEdges = edges,
+                centerTitle = centerTitle,
+                centerProgress = centerProgress,
+                onCenterClick = { onOpenNodeFocus("derivative") },
+                onSatelliteClick = { node ->
+                    if (node.id in clickable) onOpenNodeFocus(node.id)
+                },
+                clickableSatelliteIds = clickable,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp)
+            )
+        }
         AppCard {
             Text(
                 text = "关系示例",

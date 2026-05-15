@@ -3,14 +3,17 @@ package com.lanxin.zhijing.navigation
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.lanxin.zhijing.data.local.LocalDbConstants
 import com.lanxin.zhijing.ui.components.AppScaffold
 import com.lanxin.zhijing.ui.components.BottomNavBar
 import com.lanxin.zhijing.ui.screens.AnalysisScreen
@@ -30,11 +33,14 @@ private val tabRoutes = setOf(
 )
 
 @Composable
-fun AppNavGraph() {
+fun AppNavGraph(
+    learningViewModel: LearningViewModel
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute in tabRoutes
+    val showBottomBar = currentRoute?.substringBefore("/") in tabRoutes ||
+        currentRoute in tabRoutes
     val context = LocalContext.current
 
     fun navigateToTab(route: String) {
@@ -49,7 +55,7 @@ fun AppNavGraph() {
         showBottomBar = showBottomBar,
         bottomBar = {
             BottomNavBar(
-                currentRoute = currentRoute,
+                currentRoute = currentRoute?.substringBefore("/"),
                 onNavigate = { route -> navigateToTab(route) }
             )
         }
@@ -63,26 +69,42 @@ fun AppNavGraph() {
         ) {
             composable(Routes.HOME) {
                 HomeScreen(
+                    viewModel = learningViewModel,
                     onOpenAnalysis = { navController.navigate(Routes.ANALYSIS) },
                     onOpenKnowledgeTree = { navigateToTab(Routes.KNOWLEDGE_TREE) }
                 )
             }
             composable(Routes.ANALYSIS) {
                 AnalysisScreen(
+                    viewModel = learningViewModel,
                     onViewKnowledgeTree = { navigateToTab(Routes.KNOWLEDGE_TREE) },
-                    onGetStepHints = { navController.navigate(Routes.NODE_FOCUS) },
+                    onGetStepHints = { navController.navigate(Routes.nodeFocus(LocalDbConstants.NODE_DERIVATIVE)) },
                     onAddToWrongBook = { context.showShortToast("已加入错题本") }
                 )
             }
             composable(Routes.KNOWLEDGE_TREE) {
                 KnowledgeTreeScreen(
-                    onOpenNodeFocus = { navController.navigate(Routes.NODE_FOCUS) }
+                    viewModel = learningViewModel,
+                    onOpenNodeFocus = { nodeId ->
+                        navController.navigate(Routes.nodeFocus(nodeId))
+                    }
                 )
             }
-            composable(Routes.NODE_FOCUS) {
-                val vm: LearningViewModel = viewModel()
+            composable(
+                route = Routes.NODE_FOCUS_PATTERN,
+                arguments = listOf(
+                    navArgument("nodeId") {
+                        type = NavType.StringType
+                        defaultValue = LocalDbConstants.NODE_DERIVATIVE
+                    }
+                )
+            ) { entry ->
+                val nodeId = entry.arguments?.getString("nodeId") ?: LocalDbConstants.NODE_DERIVATIVE
+                LaunchedEffect(nodeId) {
+                    learningViewModel.setFocusNodeId(nodeId)
+                }
                 NodeFocusScreen(
-                    viewModel = vm,
+                    viewModel = learningViewModel,
                     onExplainToPeer = { navigateToTab(Routes.REVIEW) },
                     onRelatedWrong = { context.showShortToast("已展示相关错题") },
                     onAddReview = { context.showShortToast("已加入复习计划") }
@@ -90,11 +112,14 @@ fun AppNavGraph() {
             }
             composable(Routes.REVIEW) {
                 ReviewScreen(
+                    viewModel = learningViewModel,
                     onNextPractice = { context.showShortToast("已生成 2 道同类练习题") }
                 )
             }
             composable(Routes.PROFILE) {
-                ProfileScreen()
+                ProfileScreen(
+                    viewModel = learningViewModel
+                )
             }
         }
     }

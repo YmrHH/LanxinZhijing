@@ -20,23 +20,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.lanxin.zhijing.data.MockData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lanxin.zhijing.ui.components.AppCard
 import com.lanxin.zhijing.ui.components.PageHeader
 import com.lanxin.zhijing.ui.components.TagChip
 import com.lanxin.zhijing.ui.theme.AppColors
+import com.lanxin.zhijing.viewmodel.LearningViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AnalysisScreen(
+    viewModel: LearningViewModel,
     onViewKnowledgeTree: () -> Unit,
     onGetStepHints: () -> Unit,
     onAddToWrongBook: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val analysis by viewModel.analysisDisplay.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshAnalysisForDisplay()
+    }
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -55,13 +65,13 @@ fun AnalysisScreen(
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "内容类型：数学错题",
+                text = "内容类型：${analysis.contentType}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "核心考点：导数与函数单调性",
+                text = "核心考点：${analysis.coreTopic}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = AppColors.textPrimary
             )
@@ -76,7 +86,7 @@ fun AnalysisScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MockData.analysisTags.forEach { tag ->
+                analysis.relatedKnowledgePoints.forEach { tag ->
                     TagChip(label = tag)
                 }
             }
@@ -89,7 +99,7 @@ fun AnalysisScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "你可能不是不会求导，而是不熟悉“导数符号变化”和“函数增减性”的关系。",
+                text = analysis.possibleWeakness,
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppColors.textPrimary
             )
@@ -101,7 +111,7 @@ fun AnalysisScreen(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "导数定义 -> 几何意义 -> 导数符号 -> 单调性 -> 极值判断",
+                text = analysis.suggestedPath.joinToString(" -> "),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppColors.textPrimary
             )

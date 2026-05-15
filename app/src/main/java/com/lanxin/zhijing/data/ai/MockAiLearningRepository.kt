@@ -4,6 +4,7 @@ import com.lanxin.zhijing.data.MockData
 
 /**
  * V0.1：返回与产品主线一致的固定数据，不发起网络请求。
+ * V0.3：在仍不接真实模型的前提下，根据用户导入文本做轻量摘要拼接，便于联调导入链路。
  */
 class MockAiLearningRepository : AiLearningRepository {
 
@@ -11,12 +12,33 @@ class MockAiLearningRepository : AiLearningRepository {
         text: String,
         sourceType: ImportSource
     ): Result<LearningAnalysisResult> {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) {
+            return Result.success(builtInDefaultLearningAnalysis())
+        }
+        val firstLine = trimmed.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()
+        val coreTopic = firstLine.take(40).ifBlank { "导数与函数单调性" }
+        val contentType = when {
+            sourceType == ImportSource.TEXTBOOK_OR_NOTES -> "教材/笔记摘录"
+            sourceType == ImportSource.PASTE_TEXT -> "粘贴文档"
+            trimmed.length > 800 -> "长文档"
+            else -> "学习内容"
+        }
+        val flat = trimmed.replace("\n", " ").trim()
+        val snippet = flat.take(72) + if (flat.length > 72) "…" else ""
+        val weakness =
+            "结合你提供的学习材料，可关注其中关键表述：「$snippet」。建议同时回顾导数符号与单调性的关系。"
+        val extraTag = coreTopic.take(12).ifBlank { null }
+        val tags = buildList {
+            extraTag?.let { if (it.isNotBlank() && it !in MockData.analysisTags) add("材料摘要：$it") }
+            addAll(MockData.analysisTags)
+        }
         return Result.success(
             LearningAnalysisResult(
-                contentType = "数学错题",
-                coreTopic = "导数与函数单调性",
-                relatedKnowledgePoints = MockData.analysisTags,
-                possibleWeakness = "你可能不是不会求导，而是不熟悉「导数符号变化」和「函数增减性」的关系。",
+                contentType = contentType,
+                coreTopic = coreTopic,
+                relatedKnowledgePoints = tags,
+                possibleWeakness = weakness,
                 suggestedPath = listOf("导数定义", "几何意义", "导数符号", "单调性", "极值判断"),
                 nodes = MockData.knowledgeNodes,
                 relations = MockData.relations

@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lanxin.zhijing.data.KnowledgeNode
-import com.lanxin.zhijing.data.MockData
 import com.lanxin.zhijing.ui.theme.AppColors
 import kotlin.math.cos
 import kotlin.math.min
@@ -41,6 +40,7 @@ private fun colorForNodeType(type: String): Color = when (type) {
 @Composable
 fun KnowledgeGraph(
     nodes: List<KnowledgeNode>,
+    graphEdges: List<Pair<String, String>>,
     centerTitle: String,
     centerProgress: Int,
     onCenterClick: () -> Unit,
@@ -67,7 +67,7 @@ fun KnowledgeGraph(
         val positions = nodes.mapIndexed { index, _ -> posForIndex(index, nodes.size) }
 
         fun positionForId(id: String): Offset? = when (id) {
-            "center" -> Offset(cxPx, cyPx)
+            "derivative" -> Offset(cxPx, cyPx)
             else -> {
                 val idx = idToIndex[id] ?: return null
                 positions[idx]
@@ -79,7 +79,7 @@ fun KnowledgeGraph(
 
         Box(Modifier.fillMaxSize()) {
             Canvas(Modifier.fillMaxSize()) {
-                MockData.graphEdges.forEach { (from, to) ->
+                graphEdges.forEach { (from, to) ->
                     val a = positionForId(from) ?: return@forEach
                     val b = positionForId(to) ?: return@forEach
                     drawLine(

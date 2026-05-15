@@ -21,6 +21,7 @@ data class KnowledgeRelation(
 )
 
 data class ChatMessage(
+    val id: String,
     val role: String,
     val content: String
 )
