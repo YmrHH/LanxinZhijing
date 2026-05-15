@@ -780,7 +780,7 @@ app/src/main/java/com/lanxin/zhijing/
 如果未来要扩展真实能力，只能在用户明确要求后进行。
 
 可能的后续扩展方向包括：
-1. 接入真实 AI 分析
+1. 接入真实 AI 分析（详见「二十四、蓝心大模型 AI 接入规范」；正式接入属 **V0.5**；生产环境须通过自有后端代理，**AppKEY 不得放在客户端**）
 2. 接入 OCR
 3. 接入文档解析
 4. 接入本地数据库 Room
@@ -803,6 +803,401 @@ app/src/main/java/com/lanxin/zhijing/
 6. 不要输出大量无关解释
 7. 不要把项目改成其他技术栈
 8. 不要自行改变产品方向
+
+二十四、蓝心大模型 AI 接入规范
+
+零、官方文档与实现依据
+
+1. 官方文档入口：https://aigc.vivo.com.cn/#/document/index?id=1746（单页应用；若 vivo 调整入口或文档编号，以 vivo AIGC 平台当前展示为准）。
+2. **具体** HTTP(S) 地址、Path、鉴权方式（如 Header 名、签名算法、时间戳、Body 字段名）、以及平台返回的**原始**响应结构，**必须以该文档（及后续版本）为准**；本 PLAN **不**写入、**不**臆测、**不**维护具体 URL 或签名字段，以免与官方变更不一致。
+3. 实施 **V0.5** 的 `VivoLanxinAiRepository` 前，须在可正常访问文档的环境下**逐条对照**后再编写网络层与解析逻辑。
+4. **架构原则**：生产环境 Android 客户端只调用**自有后端**；由后端持有 AppID 与 AppKEY 调用 vivo 蓝心大模型；客户端日志、崩溃上报与接口报错信息中**不得**出现 AppKEY。
+5. 下列示意图仅表达职责边界，**不代表** vivo 官方拓扑或接口形态：
+
+```mermaid
+flowchart LR
+  subgraph app [AndroidApp]
+    VM[ViewModel]
+    Repo[AiLearningRepository]
+  end
+  subgraph server [推荐生产]
+    API[自有后端]
+  end
+  subgraph vivo [vivo蓝心]
+    LLM[大模型服务]
+  end
+  VM --> Repo
+  Repo -->|"V0.5生产"| API
+  API -->|"AppID与AppKEY仅服务端"| LLM
+```
+
+==============================
+蓝心大模型 AI 接入规范
+==============================
+
+一、AI 接入目标
+
+蓝心知径后续需要接入 vivo 蓝心大模型能力，用于实现：
+
+1. 学习内容分析
+2. 考点识别
+3. 可能卡点判断
+4. 知识点提取
+5. 知识关系生成
+6. 节点追问
+7. 分步提示
+8. 费曼复述评分
+9. 掌握度更新建议
+10. 复习任务生成
+
+注意：
+AI 不能只是普通聊天。
+AI 输出必须服务于「知识树学习助手」的产品主线。
+
+二、当前阶段执行规则
+
+当前 V0.1 阶段仍然使用 MockAiLearningRepository。
+
+不要现在直接把真实蓝心大模型接口接进页面。
+不要把 AppKEY 写进 Android 项目。
+不要在 UI 页面里直接写 HTTP 请求。
+不要把 AI 调用逻辑写进 Composable 页面。
+
+当前阶段只做：
+1. 保留 Mock AI 流程
+2. 创建 AI 接口抽象
+3. 预留 VivoLanxinAiRepository 文件
+4. 预留后续接入位置
+5. 在 PLAN.md 中明确真实接入属于 V0.5 阶段
+
+三、密钥安全要求
+
+AppID 可以作为普通配置处理，但 AppKEY 必须按密钥处理。
+
+禁止：
+
+1. 禁止把 AppKEY 写死在 Kotlin 代码里
+2. 禁止把 AppKEY 写进 build.gradle
+3. 禁止把 AppKEY 写进 AndroidManifest.xml
+4. 禁止把 AppKEY 写进 PLAN.md
+5. 禁止把 AppKEY 写进 README
+6. 禁止把 AppKEY 提交到 GitHub
+7. 禁止在 Logcat 中打印 AppKEY
+8. 禁止在报错信息中显示 AppKEY
+
+生产环境推荐方案：
+
+Android APP
+↓
+自己的后端接口
+↓
+后端保存 AppID / AppKEY
+↓
+后端调用 vivo 蓝心大模型
+↓
+后端返回结构化结果给 Android APP
+
+原因：
+Android APK 可以被反编译，如果把 AppKEY 放在客户端，密钥有泄露风险。
+
+四、开发阶段临时方案
+
+如果用户后续明确要求在 Android 端临时直连蓝心大模型进行测试，只能作为 Debug 测试方案。
+
+Debug 测试时：
+
+1. 把 AppID 和 AppKEY 放在 local.properties
+2. local.properties 必须加入 .gitignore
+3. 通过 Gradle BuildConfig 读取
+4. 只能 Debug 使用
+5. Release 版本不允许直连携带 AppKEY
+6. 不允许打印 AppKEY
+7. 不允许把 local.properties 提交到仓库
+
+示例原则：
+
+local.properties 中可以放：
+VIVO_APP_ID=用户自己的 AppID
+VIVO_APP_KEY=用户自己的 AppKEY
+
+但不要在任何公开文件中写真实值。
+
+五、AI Repository 设计
+
+必须创建统一 AI 接口：
+
+interface AiLearningRepository {
+
+    suspend fun analyzeLearningContent(
+        text: String,
+        sourceType: ImportSource
+    ): Result<LearningAnalysisResult>
+
+    suspend fun askNodeQuestion(
+        nodeContext: NodeQuestionContext,
+        question: String
+    ): Result<String>
+
+    suspend fun generateStepHints(
+        nodeContext: NodeQuestionContext
+    ): Result<List<String>>
+
+    suspend fun evaluateFeynmanAnswer(
+        request: FeynmanEvaluationRequest
+    ): Result<FeynmanEvaluationResult>
+}
+
+必须保留两个实现：
+
+1. MockAiLearningRepository
+当前 V0.1 使用，返回固定 mock 数据。
+
+2. VivoLanxinAiRepository
+V0.5 接入真实蓝心大模型时使用。
+
+注意：
+UI 页面只能依赖 ViewModel。
+ViewModel 只能依赖 AiLearningRepository。
+不要让 UI 直接依赖 VivoLanxinAiRepository。
+
+六、AI 数据模型设计
+
+LearningAnalysisResult 至少包含：
+
+data class LearningAnalysisResult(
+    val contentType: String,
+    val coreTopic: String,
+    val relatedKnowledgePoints: List<String>,
+    val possibleWeakness: String,
+    val suggestedPath: List<String>,
+    val nodes: List<KnowledgeNode>,
+    val relations: List<KnowledgeRelation>
+)
+
+NodeQuestionContext 至少包含：
+
+data class NodeQuestionContext(
+    val nodeId: String,
+    val nodeTitle: String,
+    val nodeDescription: String,
+    val mastery: Int,
+    val relatedNodes: List<KnowledgeNode>,
+    val recentMistakes: List<String>,
+    val recentReviewFeedback: List<String>
+)
+
+FeynmanEvaluationRequest 至少包含：
+
+data class FeynmanEvaluationRequest(
+    val nodeId: String,
+    val nodeTitle: String,
+    val question: String,
+    val userAnswer: String,
+    val masteryBefore: Int
+)
+
+FeynmanEvaluationResult 至少包含：
+
+data class FeynmanEvaluationResult(
+    val score: Int,
+    val level: String,
+    val strengths: List<String>,
+    val weaknesses: List<String>,
+    val suggestions: List<String>,
+    val masteryBefore: Int,
+    val masteryAfter: Int,
+    val nextTasks: List<String>
+)
+
+七、蓝心大模型输出要求
+
+为了方便 App 解析，调用蓝心大模型时，提示词必须要求模型返回严格 JSON。
+
+不要让模型返回大段散文。
+不要让模型返回 Markdown 表格。
+不要让模型随意改变字段名。
+
+学习内容分析的 AI 输出必须类似：
+
+{
+  "contentType": "数学错题",
+  "coreTopic": "导数与函数单调性",
+  "relatedKnowledgePoints": ["导数计算", "导数符号", "单调区间", "极值判断", "参数讨论"],
+  "possibleWeakness": "你可能不是不会求导，而是不熟悉导数符号变化和函数增减性的关系。",
+  "suggestedPath": ["导数定义", "几何意义", "导数符号", "单调性", "极值判断"],
+  "nodes": [
+    {
+      "id": "symbol",
+      "label": "导数符号",
+      "progress": 45,
+      "type": "medium"
+    }
+  ],
+  "relations": [
+    {
+      "from": "导数符号",
+      "relation": "影响",
+      "to": "单调区间"
+    }
+  ]
+}
+
+八、学习内容分析 Prompt 规范
+
+VivoLanxinAiRepository 中需要准备一个学习分析 Prompt。
+
+Prompt 目标：
+把用户导入的题目、教材、笔记、文档或截图 OCR 文本，分析成结构化学习结果。
+
+Prompt 要求：
+
+你是「蓝心知径」的 AI 学习分析引擎。
+你的任务不是直接给答案，而是帮助学习者判断：
+1. 这是什么学习内容
+2. 核心考点是什么
+3. 关联知识点有哪些
+4. 用户可能卡在哪里
+5. 应该先补哪条知识链
+6. 这次内容应该沉淀成哪些知识节点
+7. 节点之间有什么关系
+
+请严格返回 JSON，不要输出 Markdown，不要输出解释文字。
+
+九、节点追问 Prompt 规范
+
+节点追问不能变成普通聊天。
+
+Prompt 要求：
+
+你是「蓝心知径」的节点学习教练。
+当前用户正在学习某个知识节点。
+请根据：
+1. 当前节点
+2. 相邻节点
+3. 用户掌握度
+4. 用户问题
+5. 最近错题或复述反馈
+
+给出适合学习者理解的回答。
+
+回答要求：
+1. 不要只给最终答案
+2. 优先解释用户卡点
+3. 可以给例子
+4. 可以引导用户自己思考
+5. 回答要围绕当前知识节点
+6. 不要跑题
+
+十、分步提示 Prompt 规范
+
+分步提示用于引导用户，而不是一次性给完整答案。
+
+Prompt 要求：
+
+请围绕当前知识节点生成 3 到 5 条分步提示。
+提示必须从简单到深入。
+每条提示要短。
+不要直接给最终完整答案。
+返回 JSON 数组。
+
+十一、费曼复述评分 Prompt 规范
+
+费曼复述评分用于判断用户是否真正理解。
+
+Prompt 要求：
+
+你是「蓝心知径」的费曼复述评分教练。
+请根据用户对知识点的复述内容进行评分。
+
+你需要判断：
+1. 用户是否说出了核心概念
+2. 用户是否能用自己的话解释
+3. 用户是否遗漏关键前置知识
+4. 用户是否存在理解误区
+5. 用户下一步应该补什么
+
+请返回严格 JSON：
+
+{
+  "score": 78,
+  "level": "基本理解",
+  "strengths": ["说出了导数和函数变化趋势有关"],
+  "weaknesses": ["缺少切线斜率解释", "没有说明区间内导数符号是否稳定"],
+  "suggestions": ["补充导数几何意义", "完成 2 道同类题"],
+  "masteryBefore": 42,
+  "masteryAfter": 68,
+  "nextTasks": ["完成 2 道同类题", "复习导数符号与单调区间"]
+}
+
+十二、错误处理要求
+
+AI 调用必须处理：
+
+1. 网络失败
+2. 鉴权失败
+3. 接口限流
+4. 响应为空
+5. JSON 解析失败
+6. 模型返回格式不符合要求
+7. 请求超时
+
+UI 层必须显示：
+
+1. 加载中
+2. 分析失败
+3. 重试按钮
+4. 使用 mock 示例继续体验，后续可选
+
+十三、AI 接入阶段安排
+
+V0.1：
+使用 MockAiLearningRepository。
+只预留接口，不接真实 AI。
+
+V0.2：
+Room 保存 AI 分析结果的数据结构。
+
+V0.3：
+真实导入内容，但 AI 仍可 mock。
+
+V0.4：
+OCR 和文本抽取后，将真实文本传入分析流程，但 AI 仍可 mock 或 Debug 接入。
+
+V0.5：
+正式接入 vivo 蓝心大模型。
+实现 VivoLanxinAiRepository。
+AnalysisScreen 使用真实 AI 结果。
+NodeFocusScreen 使用真实 AI 回复。
+ReviewScreen 使用真实 AI 评分。
+
+十四、Cursor 当前任务
+
+当前不要直接接入真实蓝心大模型。
+
+现在只做：
+
+1. 阅读 vivo 官方文档，了解接口调用方式
+2. 更新 PLAN.md 的 AI 接入规范
+3. 创建 AiLearningRepository 接口
+4. 创建 MockAiLearningRepository
+5. 创建 VivoLanxinAiRepository 空实现或 TODO 实现
+6. 创建 AI 相关数据模型
+7. 确保当前 V0.1 仍然使用 MockAiLearningRepository
+8. 不要写入真实 AppKEY
+9. 不要打印 AppKEY
+10. 不要把密钥提交到仓库
+
+十五、后续真实接入时再做
+
+当用户明确说「开始接入蓝心大模型」时，再执行：
+
+1. 按 vivo 文档配置请求地址
+2. 按 vivo 文档实现鉴权
+3. 按 vivo 文档组装请求体
+4. 按 vivo 文档解析响应体
+5. 接入 Loading / Error / Retry 状态
+6. 使用严格 JSON Prompt
+7. 测试学习分析、节点追问、费曼评分三类调用
 
 最终目标：
 做出一个稳定、简洁、可演示、符合原型图风格的 Android 原生 APP Demo。
